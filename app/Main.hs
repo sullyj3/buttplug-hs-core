@@ -32,9 +32,9 @@ import           Data.HashMap.Strict as HMap
 import           Control.Concurrent (forkIO, threadDelay)
 import           Data.ByteString.Lazy (fromStrict)
 
-import qualified Devices             as Dev
-import           Devices             (Device)
-import           JSONUtils
+import qualified Buttplug.Devices    as Dev
+import           Buttplug.Devices    (Device)
+import           Buttplug.JSONUtils
 
 
 data ErrorCode = ERROR_UNKNOWN

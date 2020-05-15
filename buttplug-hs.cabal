@@ -4,16 +4,16 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: b8323d9120df4c372e590aee647413c11b12e4ca2b9721ecd126fa3050bfb666
+-- hash: adb0dfe7484286fb12e340c03a9bbae84a550ede9b031da901741ecca253012e
 
 name:           buttplug-hs
 version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/githubuser/buttplug-hs#readme>
-homepage:       https://github.com/githubuser/buttplug-hs#readme
-bug-reports:    https://github.com/githubuser/buttplug-hs/issues
-author:         Author name here
-maintainer:     example@example.com
-copyright:      2020 Author name here
+description:    Please see the README on GitHub at <https://github.com/sullyj3/buttplug-hs#readme>
+homepage:       https://github.com/sullyj3/buttplug-hs#readme
+bug-reports:    https://github.com/sullyj3/buttplug-hs/issues
+author:         James Sully
+maintainer:     sullyj3@gmail.com
+copyright:      2020 James Sully
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
@@ -23,13 +23,13 @@ extra-source-files:
 
 source-repository head
   type: git
-  location: https://github.com/githubuser/buttplug-hs
+  location: https://github.com/sullyj3/buttplug-hs
 
 library
   exposed-modules:
-      Devices
-      JSONUtils
-      Lib
+      Buttplug
+      Buttplug.Devices
+      Buttplug.JSONUtils
   other-modules:
       Paths_buttplug_hs
   hs-source-dirs:

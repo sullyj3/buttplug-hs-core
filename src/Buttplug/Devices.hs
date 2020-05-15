@@ -3,7 +3,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE DuplicateRecordFields #-}
-module Devices where
+module Buttplug.Devices where
 
 import           GHC.Generics
 import qualified Data.Map.Strict     as Map
@@ -27,7 +27,7 @@ import           Data.Aeson          ( ToJSON(..)
 import           Data.Aeson.Casing
 import           Data.HashMap.Strict as HMap
 
-import JSONUtils
+import Buttplug.JSONUtils
 
 data MessageAttributes = MessageAttributes 
        { featureCount :: Maybe Int }
