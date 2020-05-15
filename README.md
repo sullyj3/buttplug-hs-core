@@ -4,6 +4,8 @@ A haskell client library for the [Buttplug Sex Toy Control System](https://buttp
 
 ## Todo
 
+- Use Aeson's ObjectWithSingleField to remove all the XFields types
+
 Users shouldn't have to
 
 - Think about websockets
