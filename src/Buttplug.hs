@@ -23,24 +23,21 @@ import           Data.Text.Encoding  (decodeUtf8)
 import           Network.Socket      (withSocketsDo)
 import           GHC.Generics
 import           Data.Text           (Text)
-import qualified Data.Text           as T
+-- import qualified Data.Text           as T
 import qualified Data.Text.IO        as T
 import qualified Network.WebSockets  as WS
 import           Data.Aeson          ( ToJSON(..)
                                      , FromJSON(..)
                                      , (.=)
-                                     , Options(..)
                                      , Value(..)
                                      , object
                                      , genericToJSON
                                      , genericParseJSON
-                                     , defaultOptions
                                      , encode
                                      , decode)
-import qualified Data.Map.Strict     as Map
+-- import qualified Data.Map.Strict     as Map
 import           Data.Map.Strict     (Map)
 import           Data.HashMap.Strict as HMap
-import           Control.Concurrent (forkIO, threadDelay)
 import           Data.ByteString.Lazy (fromStrict)
 import           UnliftIO.Exception
 

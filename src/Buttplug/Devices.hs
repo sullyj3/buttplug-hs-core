@@ -6,7 +6,6 @@
 module Buttplug.Devices where
 
 import           GHC.Generics
-import qualified Data.Map.Strict     as Map
 import           Data.Map.Strict     (Map)
 import           Data.Text           (Text)
 import           Data.Aeson          ( ToJSON(..)
@@ -14,17 +13,12 @@ import           Data.Aeson          ( ToJSON(..)
                                      , ToJSONKey(..)
                                      , FromJSONKey(..)
                                      , (.=)
-                                     , Options(..)
                                      , Value(..)
                                      , object
                                      , genericToJSON
                                      , genericToJSONKey
                                      , genericFromJSONKey
-                                     , genericParseJSON
-                                     , defaultOptions
-                                     , encode
-                                     , decode)
-import           Data.Aeson.Casing
+                                     , genericParseJSON)
 import           Data.HashMap.Strict as HMap
 
 import Buttplug.JSONUtils
