@@ -15,22 +15,26 @@ module Buttplug ( Message(..)
                 , MotorVibrate(..)
                 , ButtPlugConnection
                 , runClient
-                , receiveMsgs
                 , sendMessage
                 , sendMessages
                 , close
                 , ButtPlugM
+                , ButtPlugApp(..)
                 , runButtPlugM
+                , runButtPlugWSApp
                 , getConnection
                 ) where
 
+import           Data.Foldable       (traverse_)
+import           Control.Monad       (forever)
+import           Control.Concurrent (forkIO, threadDelay)
 import           Control.Monad.Trans.Reader
 import           Control.Monad.IO.Class
 import           Data.Text.Encoding  (decodeUtf8)
 import           Network.Socket      (withSocketsDo)
 import           GHC.Generics
 import           Data.Text           (Text)
--- import qualified Data.Text           as T
+import qualified Data.Text           as T
 import qualified Data.Text.IO        as T
 import qualified Network.WebSockets  as WS
 import           Data.Aeson          ( ToJSON(..)
@@ -293,23 +297,19 @@ instance FromJSON Message where
 
 --------------------------------------------------------------------------------
 
-receiveMsgs :: ButtPlugM [Message]
-receiveMsgs = do
-  (WebSocketConnection con) <- getConnection
-  received <- liftIO $ WS.receiveData con
-  liftIO $ T.putStrLn $ "Server sent: " <> decodeUtf8 received
+receiveMsgs :: WS.Connection -> IO [Message]
+receiveMsgs con = do
+  received <- WS.receiveData con
+  T.putStrLn $ "Server sent: " <> decodeUtf8 received
   case decode $ fromStrict received :: Maybe [Message] of
     Just msgs -> pure msgs
     Nothing -> throwString "Couldn't decode the message from the server"
   
---sendMessage :: ButtPlugConnection -> Message -> IO ()
-sendMessage :: Message -> ButtPlugM ()
-sendMessage msg = sendMessages [msg]
+sendMessage :: ButtPlugConnection -> Message -> IO ()
+sendMessage con msg = sendMessages con [msg]
 
---sendMessages :: ButtPlugConnection -> [Message] -> IO ()
-sendMessages :: [Message] -> ButtPlugM ()
-sendMessages msgs = do
-  (WebSocketConnection con) <- getConnection
+sendMessages :: ButtPlugConnection -> [Message] -> IO ()
+sendMessages (WebSocketConnection con) msgs = do
   liftIO $ WS.sendTextData con (encode msgs)
 
 close :: ButtPlugM ()
@@ -325,14 +325,75 @@ data ButtPlugConnection = WebSocketConnection { con  :: WS.Connection
 
 type ButtPlugM a = ReaderT ButtPlugConnection IO a 
 
+data ButtPlugApp = ButtPlugApp 
+  { handleDeviceAdded :: DeviceAddedFields -> ButtPlugM ()
+  }
+
 runButtPlugM :: ButtPlugConnection -> ButtPlugM a -> IO a
 runButtPlugM con bpm = runReaderT bpm con
+
+runButtPlugWSApp :: String
+               -> Int
+               -> ButtPlugApp
+               -> IO ()
+runButtPlugWSApp host port (ButtPlugApp handleDeviceAdded) = 
+  withSocketsDo $ WS.runClient host port "/" \wsCon -> do
+    putStrLn "Connected!"
+
+    let
+        con = WebSocketConnection wsCon
+        reqServerInfo = RequestServerInfo $
+          RequestServerInfoFields { id = 1
+                                  , clientName = "haskell"
+                                  , messageVersion = clientMessageVersion }
+        reqDeviceList = RequestDeviceList $ RequestDeviceListFields 1
+        startScanning = StartScanning $ StartScanningFields 1
+
+    -- WS.sendTextData con (encode [reqServerInfo, reqDeviceList, startScanning])
+    sendMessages con [reqServerInfo, reqDeviceList, startScanning]
+
+    _ <- forkIO $ forever $ handleReceivedData wsCon
+
+    T.putStrLn "Press enter to exit"
+    _ <- getLine
+    liftIO $ WS.sendClose wsCon ("Bye!" :: Text)
+
+    pure ()
+  where
+
+    handleReceivedData :: WS.Connection -> IO ()
+    handleReceivedData con = do
+      T.putStrLn "Listening for messages from server"
+      forever $ receiveMsgs con >>= handleMsgs con
+
+    handleMsgs :: WS.Connection -> [Message] -> IO ()
+    handleMsgs con msgs = do
+      T.putStrLn "Handling received messages\n"
+      traverse_ (handleMsg con) msgs
+
+    --handleMsg :: ButtPlugConnection -> Message -> IO ()
+    handleMsg :: WS.Connection -> Message -> IO ()
+    handleMsg con = \case
+      (DeviceAdded deviceAddedFields) -> do 
+        _ <- forkIO $ runButtPlugM  (WebSocketConnection con)
+                                    (handleDeviceAdded deviceAddedFields)
+        pure ()
+
+      msg -> T.putStrLn $ "Received unhandled message: " <> (T.pack $ show msg)
+
+
+void ma = do
+  _ <- ma
+  pure ()
+
 
 runClient :: String
           -> Int
           -> ButtPlugM ()
           -> IO ()
-runClient host port bpApp = withSocketsDo $ WS.runClient host port "/" app
+runClient host port bpApp = withSocketsDo $ WS.runClient host port "/" \wsCon -> do
+    putStrLn "Connected!"
+    app wsCon
   where -- app = bpApp . WebSocketConnection
         app wsCon = runReaderT bpApp (WebSocketConnection wsCon)
 
