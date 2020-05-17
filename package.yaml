@@ -30,6 +30,7 @@ dependencies:
 - text
 - containers
 - unordered-containers
+- unliftio
 - websockets
 
 library:

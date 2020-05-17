@@ -11,17 +11,20 @@ module Buttplug ( Message(..)
                 , StartScanningFields(..)
                 , VibrateCmdFields(..)
                 , MotorVibrate(..)
+                , ButtPlugConnection
+                , runClient
+                , receiveMsgs
+                , sendMessage
+                , sendMessages
+                , close
                 ) where
 
-import           GHC.Generics
-import           Control.Monad       (forever, unless)
-import           Data.Foldable       (traverse_)
-import           Control.Monad.Trans (liftIO)
+import           Data.Text.Encoding  (decodeUtf8)
 import           Network.Socket      (withSocketsDo)
+import           GHC.Generics
 import           Data.Text           (Text)
 import qualified Data.Text           as T
 import qualified Data.Text.IO        as T
-import           Data.Text.Encoding  (decodeUtf8)
 import qualified Network.WebSockets  as WS
 import           Data.Aeson          ( ToJSON(..)
                                      , FromJSON(..)
@@ -39,6 +42,7 @@ import           Data.Map.Strict     (Map)
 import           Data.HashMap.Strict as HMap
 import           Control.Concurrent (forkIO, threadDelay)
 import           Data.ByteString.Lazy (fromStrict)
+import           UnliftIO.Exception
 
 import qualified Buttplug.Devices    as Dev
 import           Buttplug.Devices    (Device)
@@ -280,8 +284,34 @@ instance FromJSON Message where
   parseJSON _ = fail "Invalid Message - not an object"
 
 --------------------------------------------------------------------------------
--- data ButtPlugConnection = WebSocket { host :: Text
--- }
+
+receiveMsgs :: ButtPlugConnection -> IO [Message]
+receiveMsgs (WebSocketConnection con) = do
+  received <- WS.receiveData con
+  T.putStrLn $ "Server sent: " <> decodeUtf8 received
+  case decode $ fromStrict received :: Maybe [Message] of
+    Just msgs -> pure msgs
+    Nothing -> throwString "Couldn't decode the message from the server"
+  
+sendMessage :: ButtPlugConnection -> Message -> IO ()
+sendMessage con msg = sendMessages con [msg]
+
+sendMessages :: ButtPlugConnection -> [Message] -> IO ()
+sendMessages (WebSocketConnection con) msgs =
+  WS.sendTextData con (encode msgs)
+
+close :: ButtPlugConnection -> IO ()
+close (WebSocketConnection con) = WS.sendClose con ("Bye!" :: Text)
+
+data ButtPlugConnection = WebSocketConnection { con  :: WS.Connection
+                                              }
+
+runClient :: String
+          -> Int
+          -> (ButtPlugConnection -> IO ())
+          -> IO ()
+runClient host port bpApp = withSocketsDo $ WS.runClient host port "/" app
+  where app = bpApp . WebSocketConnection
 
 -- "{\"DeviceName\":\"Youou Wand Vibrator\",\"DeviceMessages\":{\"SingleMotorVibrateCmd\":{},\"VibrateCmd\":{\"FeatureCount\":1},\"StopDeviceCmd\":{}},\"DeviceIndex\":1,\"Id\":0}}"
 

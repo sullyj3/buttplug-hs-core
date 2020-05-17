@@ -13,7 +13,6 @@ import           Network.Socket      (withSocketsDo)
 import           Data.Text           (Text)
 import qualified Data.Text           as T
 import qualified Data.Text.IO        as T
-import           Data.Text.Encoding  (decodeUtf8)
 import qualified Network.WebSockets  as WS
 import           Data.Aeson          ( ToJSON(..)
                                      , FromJSON(..)
@@ -39,7 +38,7 @@ import           Buttplug.JSONUtils
 import qualified Buttplug            as Butt
 import           Buttplug
 
-app :: WS.ClientApp ()
+app :: ButtPlugConnection -> IO ()
 app con = do
     putStrLn "Connected!"
 
@@ -52,45 +51,41 @@ app con = do
         reqDeviceList = RequestDeviceList $ RequestDeviceListFields 1
         startScanning = StartScanning $ StartScanningFields 1
 
-    WS.sendTextData con (encode [reqServerInfo, reqDeviceList, startScanning])
+    -- WS.sendTextData con (encode [reqServerInfo, reqDeviceList, startScanning])
+    Butt.sendMessages con [reqServerInfo, reqDeviceList, startScanning]
 
     T.putStrLn "Press enter to exit"
 
     _ <- getLine
-    WS.sendClose con ("Bye!" :: Text)
+    Butt.close con
 
   where
-    handleReceivedData :: WS.Connection -> IO ()
-    handleReceivedData con = T.putStrLn "Listening for messages from server" >> forever do
-      received <- WS.receiveData con
-      T.putStrLn $ "Server sent: " <> decodeUtf8 received
-      case decode $ fromStrict received :: Maybe [Message] of
-        Just msgs -> handleMsgs msgs con
-        Nothing -> T.putStrLn "Couldn't decode the message from the server"
+    handleReceivedData :: ButtPlugConnection -> IO ()
+    handleReceivedData con = do
+      T.putStrLn "Listening for messages from server"
+      forever $ Butt.receiveMsgs con >>= handleMsgs con
 
-    handleMsgs :: [Message] -> WS.Connection -> IO ()
-    handleMsgs msgs con = do
+    handleMsgs :: ButtPlugConnection -> [Message] -> IO ()
+    handleMsgs con msgs = do
       T.putStrLn "Handling received messages\n"
-      traverse_ (flip handleMsg con) msgs
+      traverse_ (handleMsg con) msgs
 
-    handleMsg :: Message -> WS.Connection -> IO ()
-    handleMsg (DeviceAdded (DeviceAddedFields id name idx devMsgs)) con =
-      case Map.lookup Dev.VibrateCmd devMsgs of
-        Just (Dev.MessageAttributes nVibes) -> do
-          vt1TID <- forkIO $ vibePulse1s idx con
-          pure ()
-        Nothing -> pure ()
-      
-    handleMsg msg con = T.putStrLn $ "Received unhandled message: " <> (T.pack $ show msg)
+    handleMsg :: ButtPlugConnection -> Message -> IO ()
+    handleMsg con = \case
+      (DeviceAdded (DeviceAddedFields id name idx devMsgs)) ->
+        case Map.lookup Dev.VibrateCmd devMsgs of
+          Just (Dev.MessageAttributes _nMotors) -> do
+            vt1TID <- forkIO $ vibePulse1s con idx
+            pure ()
+          Nothing -> pure ()
+      msg -> T.putStrLn $ "Received unhandled message: " <> (T.pack $ show msg)
 
-vibePulse1s :: Int -> WS.Connection -> IO ()
-vibePulse1s deviceIdx con = do
-  let msg1 = VibrateCmd (VibrateCmdFields 1 deviceIdx [ MotorVibrate 0 1 ])
-  WS.sendTextData con (encode [msg1])
+vibePulse1s :: ButtPlugConnection -> Int -> IO ()
+vibePulse1s con deviceIdx = do
+  Butt.sendMessage con $ VibrateCmd (VibrateCmdFields 1 deviceIdx [ MotorVibrate 0 1 ])
   threadDelay 1000000
-  let msg2 = VibrateCmd (VibrateCmdFields 1 deviceIdx [ MotorVibrate 0 (1/255) ])
-  WS.sendTextData con (encode [msg2])
+  Butt.sendMessage con $ VibrateCmd (VibrateCmdFields 1 deviceIdx [ MotorVibrate 0 (1/255) ])
 
 --------------------------------------------------------------------------------
 main :: IO ()
-main = withSocketsDo $ WS.runClient "localhost" 12345 "/" app
+main = Butt.runClient "localhost" 12345 app
