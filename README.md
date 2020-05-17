@@ -4,12 +4,7 @@ A haskell client library for the [Buttplug Sex Toy Control System](https://buttp
 
 ## Todo
 
+- figure out a proper API
 - Use Aeson's ObjectWithSingleField to remove all the XFields types
-
-Users shouldn't have to
-
-- Think about websockets
-- handle decoding of wire format
-- handle message types directly
+- Users shouldn't have to handle message types directly
   - (consult python and other client implementations for API ideas)
-- think about multiple motors if the device they're using only has one
