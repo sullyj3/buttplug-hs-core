@@ -236,6 +236,9 @@ data Message =
              | DeviceAdded DeviceAddedFields
                -- generic device messages
              | VibrateCmd VibrateCmdFields
+
+             -- temporary for debugging purposes
+             | UnknownMessage Value
   deriving Show
 
 
@@ -265,8 +268,8 @@ instance ToJSON Message where
       object [ "VibrateCmd" .= fields ]
 
 instance FromJSON Message where
-  parseJSON (Object v) =
-    case HMap.toList v of
+  parseJSON obj@(Object hm) =
+    case HMap.toList hm of
       [(msgType, fields)] -> do
         case msgType of
           "RequestServerInfo" -> RequestServerInfo <$> parseJSON fields
@@ -279,7 +282,8 @@ instance FromJSON Message where
           "DeviceList"        -> DeviceList        <$> parseJSON fields
           "DeviceAdded"       -> DeviceAdded       <$> parseJSON fields
           "VibrateCmd"        -> VibrateCmd        <$> parseJSON fields
-          _ -> fail "Invalid Message type"
+          _                   -> pure $ UnknownMessage obj
+          -- _ -> fail "Invalid Message type"
       _       -> fail "Invalid Message - There should be only one message type"
   parseJSON _ = fail "Invalid Message - not an object"
 
