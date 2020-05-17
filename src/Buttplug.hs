@@ -3,6 +3,8 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+
 module Buttplug ( Message(..)
                 , DeviceAddedFields(..)
                 , RequestServerInfoFields(..)
@@ -17,8 +19,13 @@ module Buttplug ( Message(..)
                 , sendMessage
                 , sendMessages
                 , close
+                , ButtPlugM
+                , runButtPlugM
+                , getConnection
                 ) where
 
+import           Control.Monad.Trans.Reader
+import           Control.Monad.IO.Class
 import           Data.Text.Encoding  (decodeUtf8)
 import           Network.Socket      (withSocketsDo)
 import           GHC.Generics
@@ -286,33 +293,48 @@ instance FromJSON Message where
 
 --------------------------------------------------------------------------------
 
-receiveMsgs :: ButtPlugConnection -> IO [Message]
-receiveMsgs (WebSocketConnection con) = do
-  received <- WS.receiveData con
-  T.putStrLn $ "Server sent: " <> decodeUtf8 received
+receiveMsgs :: ButtPlugM [Message]
+receiveMsgs = do
+  (WebSocketConnection con) <- getConnection
+  received <- liftIO $ WS.receiveData con
+  liftIO $ T.putStrLn $ "Server sent: " <> decodeUtf8 received
   case decode $ fromStrict received :: Maybe [Message] of
     Just msgs -> pure msgs
     Nothing -> throwString "Couldn't decode the message from the server"
   
-sendMessage :: ButtPlugConnection -> Message -> IO ()
-sendMessage con msg = sendMessages con [msg]
+--sendMessage :: ButtPlugConnection -> Message -> IO ()
+sendMessage :: Message -> ButtPlugM ()
+sendMessage msg = sendMessages [msg]
 
-sendMessages :: ButtPlugConnection -> [Message] -> IO ()
-sendMessages (WebSocketConnection con) msgs =
-  WS.sendTextData con (encode msgs)
+--sendMessages :: ButtPlugConnection -> [Message] -> IO ()
+sendMessages :: [Message] -> ButtPlugM ()
+sendMessages msgs = do
+  (WebSocketConnection con) <- getConnection
+  liftIO $ WS.sendTextData con (encode msgs)
 
-close :: ButtPlugConnection -> IO ()
-close (WebSocketConnection con) = WS.sendClose con ("Bye!" :: Text)
+close :: ButtPlugM ()
+close  = do
+  (WebSocketConnection con) <- getConnection
+  liftIO $ WS.sendClose con ("Bye!" :: Text)
+
+getConnection :: ButtPlugM ButtPlugConnection
+getConnection = ask
 
 data ButtPlugConnection = WebSocketConnection { con  :: WS.Connection
                                               }
 
+type ButtPlugM a = ReaderT ButtPlugConnection IO a 
+
+runButtPlugM :: ButtPlugConnection -> ButtPlugM a -> IO a
+runButtPlugM con bpm = runReaderT bpm con
+
 runClient :: String
           -> Int
-          -> (ButtPlugConnection -> IO ())
+          -> ButtPlugM ()
           -> IO ()
 runClient host port bpApp = withSocketsDo $ WS.runClient host port "/" app
-  where app = bpApp . WebSocketConnection
+  where -- app = bpApp . WebSocketConnection
+        app wsCon = runReaderT bpApp (WebSocketConnection wsCon)
 
 -- "{\"DeviceName\":\"Youou Wand Vibrator\",\"DeviceMessages\":{\"SingleMotorVibrateCmd\":{},\"VibrateCmd\":{\"FeatureCount\":1},\"StopDeviceCmd\":{}},\"DeviceIndex\":1,\"Id\":0}}"
 

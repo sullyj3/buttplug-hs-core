@@ -15,14 +15,17 @@ import qualified Buttplug.Devices    as Dev
 -- import           Buttplug.Devices    (Device)
 -- import           Buttplug.JSONUtils
 
+import           Control.Monad.IO.Class
+
 import qualified Buttplug            as Butt
 import           Buttplug
 
-app :: ButtPlugConnection -> IO ()
-app con = do
-    putStrLn "Connected!"
+app :: ButtPlugM ()
+app = do
+    con <- Butt.getConnection
+    liftIO $ putStrLn "Connected!"
 
-    recvTID <- forkIO $ forever $ handleReceivedData con
+    recvTID <- liftIO $ forkIO $ forever $ runButtPlugM con handleReceivedData
 
     let reqServerInfo = RequestServerInfo $
           RequestServerInfoFields { id = 1
@@ -32,39 +35,38 @@ app con = do
         startScanning = StartScanning $ StartScanningFields 1
 
     -- WS.sendTextData con (encode [reqServerInfo, reqDeviceList, startScanning])
-    Butt.sendMessages con [reqServerInfo, reqDeviceList, startScanning]
+    Butt.sendMessages [reqServerInfo, reqDeviceList, startScanning]
 
-    T.putStrLn "Press enter to exit"
+    liftIO $ T.putStrLn "Press enter to exit"
 
-    _ <- getLine
-    Butt.close con
+    _ <- liftIO getLine
+    Butt.close
 
   where
-    handleReceivedData :: ButtPlugConnection -> IO ()
-    handleReceivedData con = do
-      T.putStrLn "Listening for messages from server"
-      forever $ Butt.receiveMsgs con >>= handleMsgs con
+    handleReceivedData :: ButtPlugM ()
+    handleReceivedData = do
+      liftIO $ T.putStrLn "Listening for messages from server"
+      forever $ Butt.receiveMsgs >>= handleMsgs
 
-    handleMsgs :: ButtPlugConnection -> [Message] -> IO ()
-    handleMsgs con msgs = do
-      T.putStrLn "Handling received messages\n"
-      traverse_ (handleMsg con) msgs
+    handleMsgs :: [Message] -> ButtPlugM ()
+    handleMsgs msgs = do
+      liftIO $ T.putStrLn "Handling received messages\n"
+      traverse_ handleMsg msgs
 
-    handleMsg :: ButtPlugConnection -> Message -> IO ()
-    handleMsg con = \case
+    --handleMsg :: ButtPlugConnection -> Message -> IO ()
+    handleMsg :: Message -> ButtPlugM ()
+    handleMsg = \case
       (DeviceAdded (DeviceAddedFields id name idx devMsgs)) ->
         case Map.lookup Dev.VibrateCmd devMsgs of
-          Just (Dev.MessageAttributes _nMotors) -> do
-            vt1TID <- forkIO $ vibePulse1s con idx
-            pure ()
+          Just (Dev.MessageAttributes _nMotors) -> vibePulse1s idx
           Nothing -> pure ()
-      msg -> T.putStrLn $ "Received unhandled message: " <> (T.pack $ show msg)
+      msg -> liftIO$ T.putStrLn $ "Received unhandled message: " <> (T.pack $ show msg)
 
-vibePulse1s :: ButtPlugConnection -> Int -> IO ()
-vibePulse1s con deviceIdx = do
-  Butt.sendMessage con $ VibrateCmd (VibrateCmdFields 1 deviceIdx [ MotorVibrate 0 1 ])
-  threadDelay 1000000
-  Butt.sendMessage con $ VibrateCmd (VibrateCmdFields 1 deviceIdx [ MotorVibrate 0 (1/255) ])
+vibePulse1s :: Int -> ButtPlugM ()
+vibePulse1s deviceIdx = do
+  Butt.sendMessage $ VibrateCmd (VibrateCmdFields 1 deviceIdx [ MotorVibrate 0 1 ])
+  liftIO $ threadDelay 1000000
+  Butt.sendMessage $ VibrateCmd (VibrateCmdFields 1 deviceIdx [ MotorVibrate 0 (1/255) ])
 
 --------------------------------------------------------------------------------
 main :: IO ()

@@ -28,6 +28,7 @@ dependencies:
 - mtl
 - network
 - text
+- transformers
 - containers
 - unordered-containers
 - unliftio
