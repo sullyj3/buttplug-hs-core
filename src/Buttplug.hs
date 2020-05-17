@@ -23,6 +23,7 @@ module Buttplug ( Message(..)
                 , runButtPlugM
                 , runButtPlugWSApp
                 , getConnection
+                , vibrateOnlyMotor
                 ) where
 
 import           Data.Foldable       (traverse_)
@@ -319,6 +320,16 @@ close  = do
 
 getConnection :: ButtPlugM ButtPlugConnection
 getConnection = ask
+
+vibrateOnlyMotor :: Int -> Double -> ButtPlugM ()
+vibrateOnlyMotor deviceIdx speed = do
+  let msg = VibrateCmd $ VibrateCmdFields { id = 1
+                                          , deviceIndex = deviceIdx
+                                          , speeds = [MotorVibrate { index = 0
+                                                                   , speed = speed }]
+                                          }
+  con <- getConnection
+  liftIO $ sendMessage con msg
 
 data ButtPlugConnection = WebSocketConnection { con  :: WS.Connection
                                               }
