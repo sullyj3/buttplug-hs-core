@@ -48,9 +48,9 @@ expectedNonemptyDeviceFields =
                       { deviceName = "Youou Wand Vibrator"
                       , deviceIndex = 1
                       , deviceMessages =
-                          Map.fromList [ (SingleMotorVibrateCmd, MessageAttributes Nothing)
+                          Map.fromList [ (Dev.SingleMotorVibrateCmd, MessageAttributes Nothing)
                                        , (Dev.VibrateCmd, MessageAttributes $ Just 1)
-                                       , (StopDeviceCmd, MessageAttributes Nothing)
+                                       , (Dev.StopDeviceCmd, MessageAttributes Nothing)
                                        ]
                       }
                   ]

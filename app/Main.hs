@@ -41,8 +41,8 @@ vibeRampUpPulse dev scale = do
 
   pulses <- liftIO $ randomRIO (1, 15)
   for_ [1..pulses] \i -> do
-    vibrateOnlyMotor dev (scale * (0.85 + i/100)) >> sleep (i * 0.03)
-    stopDevice dev                                >> sleep (i * 0.03)
+    vibePulse dev (i * 0.03) (scale * (0.85 + i/100))
+    stopDevice dev <* sleep (i * 0.03)
 
   sleep $ 0.3 + pulses * 0.065
 
