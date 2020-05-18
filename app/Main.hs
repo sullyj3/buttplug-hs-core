@@ -27,15 +27,6 @@ app = ButtPlugApp { handleDeviceAdded = handleDeviceAdded }
         Just (Dev.MessageAttributes _nMotors) -> vibeTease1 dev 1
         Nothing -> pure ()
 
-vibePulse1s :: Device -> ButtPlugM ()
-vibePulse1s dev = vibePulseFullSpeed dev 1000000
-
-randomNumber :: Device -> ButtPlugM ()
-randomNumber dev = do
-  n <- liftIO (randomRIO (0,10) :: IO Int)
-  liftIO $ putStrLn $ "n is " <> show n
-  pure ()
-
 vibeTease1 :: Device -> Double -> ButtPlugM ()
 vibeTease1 dev scale = do
   liftIO do putStrLn $ "Starting vibeTease1, scale=" <> show scale
