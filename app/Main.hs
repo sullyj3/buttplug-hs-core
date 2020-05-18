@@ -1,7 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE BlockArguments #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE DuplicateRecordFields #-}
 module Main where
 
 import qualified Data.Text           as T
