@@ -131,6 +131,8 @@ data Message =
                            , deviceIndex :: Int
                            , deviceMessages :: Map Dev.DeviceMessageType Dev.MessageAttributes
                            }
+             | DeviceRemoved { id :: Int
+                             , deviceIndex :: Int }
                -- generic device messages
              | VibrateCmd { id :: Int
                           , deviceIndex :: Int

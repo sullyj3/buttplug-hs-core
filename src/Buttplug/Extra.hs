@@ -5,8 +5,8 @@ import           Control.Monad.IO.Class
 
 import Buttplug
 
-vibePulse1s :: Int -> ButtPlugM ()
-vibePulse1s deviceIdx = vibePulse deviceIdx 1000000 1
+vibePulseFullSpeed :: Int -> Int -> ButtPlugM ()
+vibePulseFullSpeed deviceIdx microsnds = vibePulse deviceIdx microsnds 1
 
 vibePulse :: Int -> Int -> Double -> ButtPlugM ()
 vibePulse deviceIdx microsnds speed = do

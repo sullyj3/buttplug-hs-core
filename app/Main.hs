@@ -19,6 +19,10 @@ app = ButtPlugApp { handleDeviceAdded = handleDeviceAdded }
         Just (Dev.MessageAttributes _nMotors) -> vibePulse1s deviceIdx
         Nothing -> pure ()
 
+vibePulse1s :: Int -> ButtPlugM ()
+vibePulse1s deviceIdx = vibePulseFullSpeed deviceIdx 1000000
+
+
 --------------------------------------------------------------------------------
 main :: IO ()
 main = Butt.runButtPlugApp (Butt.WebSocketConnector "localhost" 12345) app
