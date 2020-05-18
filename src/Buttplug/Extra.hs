@@ -15,5 +15,5 @@ vibePulse dev microsnds speed = do
   liftIO $ threadDelay microsnds
   stopDevice dev
 
-sleep :: Double -> ButtPlugM ()
+sleep :: MonadIO m => Double -> m ()
 sleep seconds = liftIO $ threadDelay $ round $ 1000000 * seconds

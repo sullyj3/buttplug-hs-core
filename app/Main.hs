@@ -35,16 +35,14 @@ vibeTease1 dev scale = do
 
 vibeRampUpPulse :: Device -> Double -> ButtPlugM ()
 vibeRampUpPulse dev scale = do
-  for_ [1..50] \i -> do vibrateOnlyMotor dev $ scale * i / 50
-                        liftIO $ threadDelay 50000
+  for_ [1..50] \i ->
+    vibrateOnlyMotor dev (scale * i / 50) >> sleep 0.05
   stopDevice dev
 
   pulses <- liftIO $ randomRIO (1, 15)
   for_ [1..pulses] \i -> do
-    vibrateOnlyMotor dev $ scale * (0.85 + i/100)
-    sleep $ i * 0.03
-    stopDevice dev
-    sleep $ i * 0.03
+    vibrateOnlyMotor dev (scale * (0.85 + i/100)) >> sleep (i * 0.03)
+    stopDevice dev                                >> sleep (i * 0.03)
 
   sleep $ 0.3 + pulses * 0.065
 
