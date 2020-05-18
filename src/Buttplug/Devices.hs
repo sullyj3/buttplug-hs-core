@@ -25,7 +25,7 @@ import Buttplug.JSONUtils
 
 data MessageAttributes = MessageAttributes 
        { featureCount :: Maybe Int }
-  deriving (Generic, Show)
+  deriving (Generic, Show, Eq)
 
 instance ToJSON MessageAttributes where
   toJSON (MessageAttributes mFeatCount) = case mFeatCount of
@@ -39,12 +39,11 @@ instance FromJSON MessageAttributes where
 
 ---------------------------------------------------------------
 data Device =
-       Device { id :: Int
-              , deviceName :: Text
+       Device { deviceName :: Text
               , deviceIndex :: Int
               , deviceMessages :: Map DeviceMessageType MessageAttributes
               }
-  deriving (Generic, Show)
+  deriving (Generic, Show, Eq)
 
 instance ToJSON Device where
   toJSON = genericToJSON pascalCaseOptions

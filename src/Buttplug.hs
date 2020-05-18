@@ -5,7 +5,10 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module Buttplug ( Message(..)
+module Buttplug where
+
+-- TODO split into internal module for testing and user facing module
+{-( Message(..)
                 , DeviceAddedFields(..)
                 , RequestServerInfoFields(..)
                 , RequestDeviceListFields(..)
@@ -24,7 +27,7 @@ module Buttplug ( Message(..)
                 , runButtPlugWSApp
                 , getConnection
                 , vibrateOnlyMotor
-                ) where
+                )-} 
 
 import           Data.Foldable       (traverse_)
 import           Control.Monad       (forever)
@@ -63,7 +66,7 @@ data ErrorCode = ERROR_UNKNOWN
                | ERROR_PING
                | ERROR_MSG
                | ERROR_DEVICE
-               deriving (Enum, Show)
+               deriving (Enum, Show, Eq)
 
 errCodeFromInt :: Int -> Maybe ErrorCode
 errCodeFromInt = \case
@@ -97,7 +100,7 @@ data RequestServerInfoFields =
                           , clientName :: Text
                           , messageVersion :: Int
                           }
-                          deriving (Generic, Show)
+                          deriving (Generic, Show, Eq)
 
 instance ToJSON RequestServerInfoFields where
   toJSON = genericToJSON pascalCaseOptions
@@ -115,7 +118,7 @@ data ServerInfoFields =
                    , messageVersion :: Int
                    , maxPingTime :: Int
                    }
-                   deriving (Generic, Show)
+                   deriving (Generic, Show, Eq)
 
 instance ToJSON ServerInfoFields where
   toJSON = genericToJSON pascalCaseOptions
@@ -125,7 +128,7 @@ instance FromJSON ServerInfoFields where
 
 ------------------------------------------------
 data OkFields = OkFields { id :: Int }
-  deriving (Generic, Show)
+  deriving (Generic, Show, Eq)
 
 instance ToJSON OkFields where
   toJSON = genericToJSON pascalCaseOptions
@@ -138,7 +141,7 @@ data ErrorFields = ErrorFields { id :: Int
                                , errorMessage :: Text
                                , errorCode :: ErrorCode
                                }
-  deriving (Generic, Show)
+  deriving (Generic, Show, Eq)
 
 instance ToJSON ErrorFields where
   toJSON = genericToJSON pascalCaseOptions
@@ -148,7 +151,7 @@ instance FromJSON ErrorFields where
 
 ------------------------------------------------
 data PingFields = PingFields { id :: Int }
-  deriving (Generic, Show)
+  deriving (Generic, Show, Eq)
 
 instance ToJSON PingFields where
   toJSON = genericToJSON pascalCaseOptions
@@ -158,7 +161,7 @@ instance FromJSON PingFields where
 
 ------------------------------------------------
 data StartScanningFields = StartScanningFields { id :: Int }
-  deriving (Generic, Show)
+  deriving (Generic, Show, Eq)
 
 instance ToJSON StartScanningFields where
   toJSON = genericToJSON pascalCaseOptions
@@ -168,7 +171,7 @@ instance FromJSON StartScanningFields where
 
 ------------------------------------------------
 data RequestDeviceListFields = RequestDeviceListFields { id :: Int }
-  deriving (Generic, Show)
+  deriving (Generic, Show, Eq)
 
 instance ToJSON RequestDeviceListFields where
   toJSON = genericToJSON pascalCaseOptions
@@ -181,7 +184,7 @@ data DeviceListFields =
        DeviceListFields { id :: Int
                         , devices :: [ Device ]
                         }
-  deriving (Generic, Show)
+  deriving (Generic, Show, Eq)
 
 instance ToJSON DeviceListFields where
   toJSON = genericToJSON pascalCaseOptions
@@ -196,7 +199,7 @@ data DeviceAddedFields = DeviceAddedFields
        , deviceIndex :: Int
        , deviceMessages :: Map Dev.DeviceMessageType Dev.MessageAttributes
        }
-  deriving (Generic, Show)
+  deriving (Generic, Show, Eq)
 
 instance ToJSON DeviceAddedFields where
   toJSON = genericToJSON pascalCaseOptions
@@ -209,7 +212,7 @@ data VibrateCmdFields = VibrateCmdFields { id :: Int
                                          , deviceIndex :: Int
                                          , speeds :: [ MotorVibrate ]
                                          }
-  deriving (Generic, Show)
+  deriving (Generic, Show, Eq)
 
 instance ToJSON VibrateCmdFields where
   toJSON = genericToJSON pascalCaseOptions
@@ -221,7 +224,7 @@ instance FromJSON VibrateCmdFields where
 data MotorVibrate = MotorVibrate { index :: Int
                                  , speed :: Double
                                  }
-  deriving (Generic, Show)
+  deriving (Generic, Show, Eq)
 
 instance ToJSON MotorVibrate where
   toJSON = genericToJSON pascalCaseOptions
@@ -248,7 +251,7 @@ data Message =
 
              -- temporary for debugging purposes
              | UnknownMessage Value
-  deriving Show
+  deriving (Show, Eq)
 
 
 
