@@ -6,9 +6,6 @@ import qualified Data.Map.Strict     as Map
 
 import qualified Buttplug.Devices    as Dev
 import           Buttplug.Devices    (Device(..))
--- import           Buttplug.Devices    (Device)
--- import           Buttplug.JSONUtils
-
 
 import qualified Buttplug            as Butt
 import           Buttplug
