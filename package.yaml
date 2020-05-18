@@ -25,6 +25,7 @@ dependencies:
 - aeson-casing
 - async
 - bytestring
+- hspec
 - mtl
 - network
 - text
