@@ -234,7 +234,7 @@ runButtPlugApp (WebSocketConnector host port) (ButtPlugApp handleDeviceAdded) =
     -- WS.sendTextData con (encode [reqServerInfo, reqDeviceList, startScanning])
     runButtPlugM con $ sendMessages [reqServerInfo, reqDeviceList, startScanning]
 
-    _ <- forkIO $ forever $ handleReceivedData wsCon
+    _ <- forkIO $ handleReceivedData wsCon
 
     T.putStrLn "Press enter to exit"
     _ <- getLine
@@ -245,25 +245,29 @@ runButtPlugApp (WebSocketConnector host port) (ButtPlugApp handleDeviceAdded) =
 
     handleReceivedData :: WS.Connection -> IO ()
     handleReceivedData con = do
-      T.putStrLn "Listening for messages from server"
+      putStrLn "Listening for messages from server"
       forever $ receiveMsgs con >>= handleMsgs con
 
     handleMsgs :: WS.Connection -> [Message] -> IO ()
     handleMsgs con msgs = do
-      T.putStrLn "Handling received messages\n"
+      putStrLn "Received some messages."
       traverse_ (handleMsg con) msgs
 
     --handleMsg :: ButtPlugConnection -> Message -> IO ()
     handleMsg :: WS.Connection -> Message -> IO ()
-    handleMsg con = \case
-      (DeviceAdded _msgId name idx allowedMsgs) -> do
-        let dev = Dev.Device name idx allowedMsgs
-        _ <- forkIO $ runButtPlugM  (WebSocketConnection con)
-                                    (handleDeviceAdded dev)
-        pure ()
+    handleMsg con msg = do
+      putStrLn "Handling message:"
+      print $ msg
+      case msg of
+        (DeviceAdded _msgId name idx allowedMsgs) -> do
+          let dev = Dev.Device name idx allowedMsgs
+          _ <- forkIO $ runButtPlugM (WebSocketConnection con)
+                                     (handleDeviceAdded dev)
+          pure ()
 
-      msg -> T.putStrLn $ "Received unhandled message: " <> (T.pack $ show msg)
-
+        msg -> do
+          putStrLn "No handler supplied"
+      putStrLn "-------------------"
 
 void ma = do
   _ <- ma
