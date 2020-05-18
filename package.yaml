@@ -28,6 +28,7 @@ dependencies:
 - hspec
 - mtl
 - network
+- random
 - text
 - transformers
 - containers
