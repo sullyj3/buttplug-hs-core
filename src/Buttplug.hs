@@ -25,7 +25,7 @@ module Buttplug where
 
 import           Data.Foldable       (traverse_)
 import           Control.Monad       (forever)
-import           Control.Concurrent (forkIO, threadDelay)
+import           Control.Concurrent (forkIO)
 import           Control.Monad.Trans.Reader
 import           Control.Monad.IO.Class
 import           Data.Text.Encoding  (decodeUtf8)
@@ -37,9 +37,6 @@ import qualified Data.Text.IO        as T
 import qualified Network.WebSockets  as WS
 import           Data.Aeson          ( ToJSON(..)
                                      , FromJSON(..)
-                                     , (.=)
-                                     , Value(..)
-                                     , object
                                      , genericToJSON
                                      , Options(..)
                                      , SumEncoding(..)
@@ -48,7 +45,6 @@ import           Data.Aeson          ( ToJSON(..)
                                      , decode)
 -- import qualified Data.Map.Strict     as Map
 import           Data.Map.Strict     (Map)
-import           Data.HashMap.Strict as HMap
 import           Data.ByteString.Lazy (fromStrict)
 import           UnliftIO.Exception
 
