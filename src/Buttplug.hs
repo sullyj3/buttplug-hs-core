@@ -185,6 +185,10 @@ vibrateOnlyMotor deviceIdx speed = do
 data ButtPlugConnection = WebSocketConnection { con  :: WS.Connection
                                               }
 
+data Connector = WebSocketConnector { wsConnectorHost :: String
+                                    , wsConnectorPort :: Int 
+                                    }
+
 type ButtPlugM a = ReaderT ButtPlugConnection IO a 
 
 data ButtPlugApp = ButtPlugApp 
@@ -194,11 +198,10 @@ data ButtPlugApp = ButtPlugApp
 runButtPlugM :: ButtPlugConnection -> ButtPlugM a -> IO a
 runButtPlugM con bpm = runReaderT bpm con
 
-runButtPlugWSApp :: String
-               -> Int
+runButtPlugApp :: Connector
                -> ButtPlugApp
                -> IO ()
-runButtPlugWSApp host port (ButtPlugApp handleDeviceAdded) = 
+runButtPlugApp (WebSocketConnector host port) (ButtPlugApp handleDeviceAdded) = 
   withSocketsDo $ WS.runClient host port "/" \wsCon -> do
     putStrLn "Connected!"
 

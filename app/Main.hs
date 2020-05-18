@@ -28,4 +28,4 @@ app = ButtPlugApp { handleDeviceAdded = handleDeviceAdded }
 
 --------------------------------------------------------------------------------
 main :: IO ()
-main = Butt.runButtPlugWSApp "localhost" 12345 app
+main = Butt.runButtPlugApp (Butt.WebSocketConnector "localhost" 12345) app
