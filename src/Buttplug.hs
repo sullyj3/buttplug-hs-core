@@ -47,6 +47,8 @@ import           Data.Aeson          ( ToJSON(..)
                                      , Value(..)
                                      , object
                                      , genericToJSON
+                                     , Options(..)
+                                     , SumEncoding(..)
                                      , genericParseJSON
                                      , encode
                                      , decode)
@@ -251,33 +253,14 @@ data Message =
 
              -- temporary for debugging purposes
              | UnknownMessage Value
-  deriving (Show, Eq)
+  deriving (Show, Eq, Generic)
+
 
 
 
 instance ToJSON Message where
   -- Not yet exhaustive
-  toJSON = \case
-    (RequestServerInfo fields) ->
-      object [ "RequestServerInfo" .= fields ]
-    (ServerInfo fields) ->
-      object [ "ServerInfo" .= fields ]
-    (Ok fields) ->
-      object [ "Ok" .= fields ]
-    (Error fields) ->
-      object [ "Error" .= fields ]
-    (Ping fields) ->
-      object [ "Ping" .= fields ]
-    (StartScanning fields) ->
-      object [ "StartScanning" .= fields ]
-    (RequestDeviceList fields) ->
-      object [ "RequestDeviceList" .= fields ]
-    (DeviceList fields) ->
-      object [ "DeviceList" .= fields ]
-    (DeviceAdded fields) ->
-      object [ "DeviceAdded" .= fields ]
-    (VibrateCmd fields) ->
-      object [ "VibrateCmd" .= fields ]
+  toJSON = genericToJSON $ pascalCaseOptions { sumEncoding = ObjectWithSingleField }
 
 instance FromJSON Message where
   parseJSON obj@(Object hm) =
