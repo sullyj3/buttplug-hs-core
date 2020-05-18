@@ -34,7 +34,7 @@ testButtplug =
 -- [{"ServerInfo":{"MajorVersion":0,"MinorVersion":5,"BuildVersion":5,"MessageVersion":1,"MaxPingTime":0,"ServerName":"Intiface Server","Id":1}},{"DeviceList":{"Devices":[{"DeviceName":"Youou Wand Vibrator","DeviceIndex":1,"DeviceMessages":{"SingleMotorVibrateCmd":{},"VibrateCmd":{"FeatureCount":1},"StopDeviceCmd":{}}}],"Id":1}},{"Ok":{"Id":1}}]
 
 expectedNonemptyDeviceFields =
-  [ ServerInfo ServerInfoFields
+  [ ServerInfo
       { majorVersion = 0
       , minorVersion = 5
       , buildVersion = 5
@@ -42,7 +42,7 @@ expectedNonemptyDeviceFields =
       , maxPingTime = 0
       , serverName = "Intiface Server"
       , id = 1 }
-  , DeviceList DeviceListFields
+  , DeviceList
       { id = 1
       , devices = [ Device
                       { deviceName = "Youou Wand Vibrator"
@@ -56,7 +56,7 @@ expectedNonemptyDeviceFields =
                   ]
 
       }
-  , Ok OkFields { id = 1 }
+  , Ok { id = 1 }
   ]
 
 data TestSingleConstructor = Constructor1 { field1 :: Int

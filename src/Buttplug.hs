@@ -9,12 +9,6 @@ module Buttplug where
 
 -- TODO split into internal module for testing and user facing module
 {-( Message(..)
-                , DeviceAddedFields(..)
-                , RequestServerInfoFields(..)
-                , RequestDeviceListFields(..)
-                , clientMessageVersion
-                , StartScanningFields(..)
-                , VibrateCmdFields(..)
                 , MotorVibrate(..)
                 , ButtPlugConnection
                 , runClient
@@ -97,132 +91,6 @@ clientMessageVersion :: Int
 clientMessageVersion = 1
 
 ------------------------------------------------
-data RequestServerInfoFields = 
-  RequestServerInfoFields { id :: Int
-                          , clientName :: Text
-                          , messageVersion :: Int
-                          }
-                          deriving (Generic, Show, Eq)
-
-instance ToJSON RequestServerInfoFields where
-  toJSON = genericToJSON pascalCaseOptions
-
-instance FromJSON RequestServerInfoFields where
-  parseJSON = genericParseJSON pascalCaseOptions
-
-------------------------------------------------
-data ServerInfoFields = 
-  ServerInfoFields { id :: Int
-                   , serverName :: Text
-                   , majorVersion :: Int
-                   , minorVersion :: Int
-                   , buildVersion :: Int
-                   , messageVersion :: Int
-                   , maxPingTime :: Int
-                   }
-                   deriving (Generic, Show, Eq)
-
-instance ToJSON ServerInfoFields where
-  toJSON = genericToJSON pascalCaseOptions
-
-instance FromJSON ServerInfoFields where
-  parseJSON = genericParseJSON pascalCaseOptions
-
-------------------------------------------------
-data OkFields = OkFields { id :: Int }
-  deriving (Generic, Show, Eq)
-
-instance ToJSON OkFields where
-  toJSON = genericToJSON pascalCaseOptions
-
-instance FromJSON OkFields where
-  parseJSON = genericParseJSON pascalCaseOptions
-
-------------------------------------------------
-data ErrorFields = ErrorFields { id :: Int
-                               , errorMessage :: Text
-                               , errorCode :: ErrorCode
-                               }
-  deriving (Generic, Show, Eq)
-
-instance ToJSON ErrorFields where
-  toJSON = genericToJSON pascalCaseOptions
-
-instance FromJSON ErrorFields where
-  parseJSON = genericParseJSON pascalCaseOptions
-
-------------------------------------------------
-data PingFields = PingFields { id :: Int }
-  deriving (Generic, Show, Eq)
-
-instance ToJSON PingFields where
-  toJSON = genericToJSON pascalCaseOptions
-
-instance FromJSON PingFields where
-  parseJSON = genericParseJSON pascalCaseOptions
-
-------------------------------------------------
-data StartScanningFields = StartScanningFields { id :: Int }
-  deriving (Generic, Show, Eq)
-
-instance ToJSON StartScanningFields where
-  toJSON = genericToJSON pascalCaseOptions
-
-instance FromJSON StartScanningFields where
-  parseJSON = genericParseJSON pascalCaseOptions
-
-------------------------------------------------
-data RequestDeviceListFields = RequestDeviceListFields { id :: Int }
-  deriving (Generic, Show, Eq)
-
-instance ToJSON RequestDeviceListFields where
-  toJSON = genericToJSON pascalCaseOptions
-
-instance FromJSON RequestDeviceListFields where
-  parseJSON = genericParseJSON pascalCaseOptions
-
-------------------------------------------------
-data DeviceListFields = 
-       DeviceListFields { id :: Int
-                        , devices :: [ Device ]
-                        }
-  deriving (Generic, Show, Eq)
-
-instance ToJSON DeviceListFields where
-  toJSON = genericToJSON pascalCaseOptions
-
-instance FromJSON DeviceListFields where
-  parseJSON = genericParseJSON pascalCaseOptions
-
-------------------------------------------------
-data DeviceAddedFields = DeviceAddedFields 
-       { id :: Int
-       , deviceName :: Text
-       , deviceIndex :: Int
-       , deviceMessages :: Map Dev.DeviceMessageType Dev.MessageAttributes
-       }
-  deriving (Generic, Show, Eq)
-
-instance ToJSON DeviceAddedFields where
-  toJSON = genericToJSON pascalCaseOptions
-
-instance FromJSON DeviceAddedFields where
-  parseJSON = genericParseJSON pascalCaseOptions
-
-------------------------------------------------
-data VibrateCmdFields = VibrateCmdFields { id :: Int
-                                         , deviceIndex :: Int
-                                         , speeds :: [ MotorVibrate ]
-                                         }
-  deriving (Generic, Show, Eq)
-
-instance ToJSON VibrateCmdFields where
-  toJSON = genericToJSON pascalCaseOptions
-
-instance FromJSON VibrateCmdFields where
-  parseJSON = genericParseJSON pascalCaseOptions
-
-------------------------------------------------
 data MotorVibrate = MotorVibrate { index :: Int
                                  , speed :: Double
                                  }
@@ -237,50 +105,51 @@ instance FromJSON MotorVibrate where
 ------------------------------------------------
 data Message = 
                -- handshake messages
-               RequestServerInfo RequestServerInfoFields
-             | ServerInfo ServerInfoFields
+               RequestServerInfo { id :: Int
+                                 , clientName :: Text
+                                 , messageVersion :: Int
+                                 }
+             | ServerInfo { id :: Int
+                          , serverName :: Text
+                          , majorVersion :: Int
+                          , minorVersion :: Int
+                          , buildVersion :: Int
+                          , messageVersion :: Int
+                          , maxPingTime :: Int
+                          }
                -- status messages
-             | Ok OkFields
-             | Error ErrorFields
-             | Ping PingFields
+             | Ok { id :: Int }
+             | Error { id :: Int
+                     , errorMessage :: Text
+                     , errorCode :: ErrorCode
+                     }
+             | Ping { id :: Int }
                -- enumeration messages
-             | StartScanning StartScanningFields
-             | RequestDeviceList RequestDeviceListFields
-             | DeviceList DeviceListFields
-             | DeviceAdded DeviceAddedFields
+             | StartScanning { id :: Int }
+             | RequestDeviceList { id :: Int }
+             | DeviceList { id :: Int
+                          , devices :: [ Device ]
+                          }
+             | DeviceAdded { id :: Int
+                           , deviceName :: Text
+                           , deviceIndex :: Int
+                           , deviceMessages :: Map Dev.DeviceMessageType Dev.MessageAttributes
+                           }
                -- generic device messages
-             | VibrateCmd VibrateCmdFields
-
-             -- temporary for debugging purposes
-             | UnknownMessage Value
+             | VibrateCmd { id :: Int
+                          , deviceIndex :: Int
+                          , speeds :: [ MotorVibrate ]
+                          }
   deriving (Show, Eq, Generic)
 
 
 
 
 instance ToJSON Message where
-  -- Not yet exhaustive
   toJSON = genericToJSON $ pascalCaseOptions { sumEncoding = ObjectWithSingleField }
 
 instance FromJSON Message where
-  parseJSON obj@(Object hm) =
-    case HMap.toList hm of
-      [(msgType, fields)] -> do
-        case msgType of
-          "RequestServerInfo" -> RequestServerInfo <$> parseJSON fields
-          "ServerInfo"        -> ServerInfo        <$> parseJSON fields
-          "Ok"                -> Ok                <$> parseJSON fields
-          "Error"             -> Error             <$> parseJSON fields
-          "Ping"              -> Ping              <$> parseJSON fields
-          "StartScanning"     -> StartScanning     <$> parseJSON fields
-          "RequestDeviceList" -> RequestDeviceList <$> parseJSON fields
-          "DeviceList"        -> DeviceList        <$> parseJSON fields
-          "DeviceAdded"       -> DeviceAdded       <$> parseJSON fields
-          "VibrateCmd"        -> VibrateCmd        <$> parseJSON fields
-          _                   -> pure $ UnknownMessage obj
-          -- _ -> fail "Invalid Message type"
-      _       -> fail "Invalid Message - There should be only one message type"
-  parseJSON _ = fail "Invalid Message - not an object"
+  parseJSON = genericParseJSON $ pascalCaseOptions { sumEncoding = ObjectWithSingleField }
 
 --------------------------------------------------------------------------------
 
@@ -309,11 +178,11 @@ getConnection = ask
 
 vibrateOnlyMotor :: Int -> Double -> ButtPlugM ()
 vibrateOnlyMotor deviceIdx speed = do
-  let msg = VibrateCmd $ VibrateCmdFields { id = 1
-                                          , deviceIndex = deviceIdx
-                                          , speeds = [MotorVibrate { index = 0
-                                                                   , speed = speed }]
-                                          }
+  let msg = VibrateCmd { id = 1
+                       , deviceIndex = deviceIdx
+                       , speeds = [MotorVibrate { index = 0
+                                                , speed = speed }]
+                       }
   con <- getConnection
   liftIO $ sendMessage con msg
 
@@ -323,7 +192,7 @@ data ButtPlugConnection = WebSocketConnection { con  :: WS.Connection
 type ButtPlugM a = ReaderT ButtPlugConnection IO a 
 
 data ButtPlugApp = ButtPlugApp 
-  { handleDeviceAdded :: DeviceAddedFields -> ButtPlugM ()
+  { handleDeviceAdded :: Device -> ButtPlugM ()
   }
 
 runButtPlugM :: ButtPlugConnection -> ButtPlugM a -> IO a
@@ -339,12 +208,12 @@ runButtPlugWSApp host port (ButtPlugApp handleDeviceAdded) =
 
     let
         con = WebSocketConnection wsCon
-        reqServerInfo = RequestServerInfo $
-          RequestServerInfoFields { id = 1
-                                  , clientName = "haskell"
-                                  , messageVersion = clientMessageVersion }
-        reqDeviceList = RequestDeviceList $ RequestDeviceListFields 1
-        startScanning = StartScanning $ StartScanningFields 1
+        reqServerInfo = RequestServerInfo
+                          { id = 1
+                          , clientName = "haskell"
+                          , messageVersion = clientMessageVersion }
+        reqDeviceList = RequestDeviceList 1
+        startScanning = StartScanning 1
 
     -- WS.sendTextData con (encode [reqServerInfo, reqDeviceList, startScanning])
     sendMessages con [reqServerInfo, reqDeviceList, startScanning]
@@ -371,9 +240,10 @@ runButtPlugWSApp host port (ButtPlugApp handleDeviceAdded) =
     --handleMsg :: ButtPlugConnection -> Message -> IO ()
     handleMsg :: WS.Connection -> Message -> IO ()
     handleMsg con = \case
-      (DeviceAdded deviceAddedFields) -> do 
+      (DeviceAdded _msgId name idx allowedMsgs) -> do
+        let dev = Dev.Device name idx allowedMsgs
         _ <- forkIO $ runButtPlugM  (WebSocketConnection con)
-                                    (handleDeviceAdded deviceAddedFields)
+                                    (handleDeviceAdded dev)
         pure ()
 
       msg -> T.putStrLn $ "Received unhandled message: " <> (T.pack $ show msg)
