@@ -16,10 +16,10 @@ import           Data.Aeson ( decode
                             )
 import           Data.Maybe (isJust)
 
-import           Buttplug
+import           Buttplug.Internal
 import           Buttplug.Devices
 import qualified Buttplug.Devices as Dev
-import           Buttplug.JSONUtils
+import           Buttplug.Internal.JSONUtils
 
 main :: IO ()
 main = hspec do

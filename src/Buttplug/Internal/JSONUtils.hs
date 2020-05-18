@@ -1,4 +1,4 @@
-module Buttplug.JSONUtils where
+module Buttplug.Internal.JSONUtils where
 
 import Data.Aeson (Options(..), defaultOptions, JSONKeyOptions(..), defaultJSONKeyOptions)
 import Data.Aeson.Casing

@@ -21,7 +21,7 @@ import           Data.Aeson          ( ToJSON(..)
                                      , genericParseJSON)
 import           Data.HashMap.Strict as HMap
 
-import Buttplug.JSONUtils
+import Buttplug.Internal.JSONUtils
 
 data MessageAttributes = MessageAttributes 
        { featureCount :: Maybe Int }
