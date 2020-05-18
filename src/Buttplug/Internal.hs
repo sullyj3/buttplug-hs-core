@@ -49,7 +49,7 @@ import           Data.ByteString.Lazy (fromStrict)
 import           UnliftIO.Exception
 
 import qualified Buttplug.Devices    as Dev
-import           Buttplug.Devices    (Device)
+import           Buttplug.Devices    (Device(..))
 import           Buttplug.Internal.JSONUtils
 
 
@@ -134,6 +134,8 @@ data Message =
              | DeviceRemoved { id :: Int
                              , deviceIndex :: Int }
                -- generic device messages
+             | StopDeviceCmd { id :: Int
+                             , deviceIndex :: Int }
              | VibrateCmd { id :: Int
                           , deviceIndex :: Int
                           , speeds :: [ MotorVibrate ]
@@ -159,11 +161,12 @@ receiveMsgs con = do
     Just msgs -> pure msgs
     Nothing -> throwString "Couldn't decode the message from the server"
   
-sendMessage :: ButtPlugConnection -> Message -> IO ()
-sendMessage con msg = sendMessages con [msg]
+sendMessage :: Message -> ButtPlugM ()
+sendMessage msg = sendMessages [msg]
 
-sendMessages :: ButtPlugConnection -> [Message] -> IO ()
-sendMessages (WebSocketConnection con) msgs = do
+sendMessages :: [Message] -> ButtPlugM ()
+sendMessages  msgs = do
+  (WebSocketConnection con) <- getConnection
   liftIO $ WS.sendTextData con (encode msgs)
 
 close :: ButtPlugM ()
@@ -174,15 +177,27 @@ close  = do
 getConnection :: ButtPlugM ButtPlugConnection
 getConnection = ask
 
-vibrateOnlyMotor :: Int -> Double -> ButtPlugM ()
-vibrateOnlyMotor deviceIdx speed = do
+
+stopDevice :: Device -> ButtPlugM ()
+stopDevice dev@(Device {deviceName=dName, deviceIndex=dIdx})
+  -- temporary hack until server handles StopDeviceCmd for youou correctly
+  | "Youou" `T.isInfixOf` dName = stopYouou dev
+  | otherwise = do
+      let msg = StopDeviceCmd { id = 1, deviceIndex = dIdx }
+      sendMessage msg
+  where
+    stopYouou :: Device -> ButtPlugM ()
+    stopYouou dev = vibrateOnlyMotor dev $ 1/255
+
+vibrateOnlyMotor :: Device -> Double -> ButtPlugM ()
+vibrateOnlyMotor (Device {deviceIndex = dIdx}) speed = do
   let msg = VibrateCmd { id = 1
-                       , deviceIndex = deviceIdx
+                       , deviceIndex = dIdx
                        , speeds = [MotorVibrate { index = 0
                                                 , speed = speed }]
                        }
   con <- getConnection
-  liftIO $ sendMessage con msg
+  sendMessage msg
 
 data ButtPlugConnection = WebSocketConnection { con  :: WS.Connection
                                               }
@@ -217,7 +232,7 @@ runButtPlugApp (WebSocketConnector host port) (ButtPlugApp handleDeviceAdded) =
         startScanning = StartScanning 1
 
     -- WS.sendTextData con (encode [reqServerInfo, reqDeviceList, startScanning])
-    sendMessages con [reqServerInfo, reqDeviceList, startScanning]
+    runButtPlugM con $ sendMessages [reqServerInfo, reqDeviceList, startScanning]
 
     _ <- forkIO $ forever $ handleReceivedData wsCon
 

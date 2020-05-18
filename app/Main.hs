@@ -14,13 +14,13 @@ import           Buttplug.Extra
 app :: ButtPlugApp
 app = ButtPlugApp { handleDeviceAdded = handleDeviceAdded }
   where
-    handleDeviceAdded (Device deviceName deviceIdx devMsgs) = 
+    handleDeviceAdded dev@(Device deviceName deviceIdx devMsgs) =
       case Map.lookup Dev.VibrateCmd devMsgs of
-        Just (Dev.MessageAttributes _nMotors) -> vibePulse1s deviceIdx
+        Just (Dev.MessageAttributes _nMotors) -> vibePulse1s dev
         Nothing -> pure ()
 
-vibePulse1s :: Int -> ButtPlugM ()
-vibePulse1s deviceIdx = vibePulseFullSpeed deviceIdx 1000000
+vibePulse1s :: Device -> ButtPlugM ()
+vibePulse1s dev = vibePulseFullSpeed dev 1000000
 
 
 --------------------------------------------------------------------------------
