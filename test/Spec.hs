@@ -16,6 +16,8 @@ import           Data.Aeson ( decode
                             , genericParseJSON
                             )
 import           Data.Maybe (isJust)
+import           Data.ByteString     (ByteString)
+import qualified Data.ByteString     as BS
 
 import           Buttplug.Internal
 import           Buttplug.Devices
@@ -30,11 +32,17 @@ testButtplug = do
   describe "decode" do
     let non_empty_device_list = "[{\"ServerInfo\":{\"MajorVersion\":0,\"MinorVersion\":5,\"BuildVersion\":5,\"MessageVersion\":1,\"MaxPingTime\":0,\"ServerName\":\"Intiface Server\",\"Id\":1}},{\"DeviceList\":{\"Devices\":[{\"DeviceName\":\"Youou Wand Vibrator\",\"DeviceIndex\":1,\"DeviceMessages\":{\"SingleMotorVibrateCmd\":{},\"VibrateCmd\":{\"FeatureCount\":1},\"StopDeviceCmd\":{}}}],\"Id\":1}},{\"Ok\":{\"Id\":1}}]"
 
-    it "can decode a simple list of messages with a nonempty device list" $
+    it "Can decode a simple list of messages with a nonempty device list" $
       (decode non_empty_device_list :: Maybe [Message]) `shouldBe` Just expectedNonemptyDeviceFields
 
-    it "decodes LogLevelOff correctly" do
-      (decode "\"Off\"" :: Maybe LogLevel) `shouldBe` Just LogLevelOff
+    it "Decodes LogLevelOff correctly" do
+      decode "\"Off\"" `shouldBe` Just LogLevelOff
+
+    it "Decodes a RawCommand correctly" do
+      decode "[255,255,0,123]" `shouldBe` (Just $ RawCommand $ BS.pack [255,255,0,123])
+
+    it "Won't parse rawcommands if the ints are larger than the size of a byte" do
+      decode "[255, 256]" `shouldBe` (Nothing :: Maybe RawCommand)
 
   describe "encode" do
     it "encodes LogLevelOff correctly" do

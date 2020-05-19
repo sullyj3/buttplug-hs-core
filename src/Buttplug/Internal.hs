@@ -34,6 +34,9 @@ import           GHC.Generics
 import           Data.Text           (Text)
 import qualified Data.Text           as T
 import qualified Data.Text.IO        as T
+import           Data.ByteString     (ByteString)
+import qualified Data.ByteString     as BS
+import qualified Data.Word           (Word8)
 import qualified Network.WebSockets  as WS
 import           Data.Aeson          ( ToJSON(..)
                                      , FromJSON(..)
@@ -86,6 +89,16 @@ instance FromJSON ErrorCode where
 ------------------------------------------------
 clientMessageVersion :: Int
 clientMessageVersion = 1
+
+------------------------------------------------
+newtype RawCommand = RawCommand ByteString
+  deriving (Generic, Show, Eq)
+
+instance ToJSON RawCommand where
+  toJSON (RawCommand bs) = toJSON $ BS.unpack bs
+
+instance FromJSON RawCommand where
+  parseJSON j = RawCommand . BS.pack <$> parseJSON j
 
 ------------------------------------------------
 data MotorVibrate = MotorVibrate { index :: Int
