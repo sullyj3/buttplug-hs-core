@@ -1,7 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE BlockArguments #-}
-{-# LANGUAGE DuplicateRecordFields #-}
 
 import           GHC.Generics
 import qualified Data.Map.Strict as Map
@@ -52,35 +51,27 @@ testButtplug = do
 
 expectedNonemptyDeviceFields =
   [ ServerInfo
-      { majorVersion = 0
-      , minorVersion = 5
-      , buildVersion = 5
-      , messageVersion = 1
-      , maxPingTime = 0
-      , serverName = "Intiface Server"
-      , id = 1 }
+      { msgMajorVersion = 0
+      , msgMinorVersion = 5
+      , msgBuildVersion = 5
+      , msgMessageVersion = 1
+      , msgMaxPingTime = 0
+      , msgServerName = "Intiface Server"
+      , msgId = 1 }
   , DeviceList
-      { id = 1
-      , devices = [ Device
-                      { deviceName = "Youou Wand Vibrator"
-                      , deviceIndex = 1
-                      , deviceMessages =
-                          Map.fromList [ (Dev.SingleMotorVibrateCmd, MessageAttributes Nothing)
-                                       , (Dev.VibrateCmd, MessageAttributes $ Just 1)
-                                       , (Dev.StopDeviceCmd, MessageAttributes Nothing)
-                                       ]
-                      }
+      { msgId = 1
+      , msgDevices = [ Device
+                         { deviceName = "Youou Wand Vibrator"
+                         , deviceIndex = 1
+                         , deviceMessages =
+                             Map.fromList [ (Dev.SingleMotorVibrateCmd, MessageAttributes Nothing)
+                                          , (Dev.VibrateCmd, MessageAttributes $ Just 1)
+                                          , (Dev.StopDeviceCmd, MessageAttributes Nothing)
+                                          ]
+                         }
                   ]
 
       }
-  , Ok { id = 1 }
+  , Ok { msgId = 1 }
   ]
 
-data TestSingleConstructor = Constructor1 { field1 :: Int
-                                          , field2 :: String }
-                           | Constructor2 { field3 :: Int
-                                          }
-                                               deriving (Show, Eq, Generic)
-
-instance ToJSON TestSingleConstructor where
-  toJSON = genericToJSON $ pascalCaseOptions { sumEncoding = ObjectWithSingleField }

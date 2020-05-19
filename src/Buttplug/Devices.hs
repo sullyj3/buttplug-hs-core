@@ -2,7 +2,6 @@
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE DuplicateRecordFields #-}
 module Buttplug.Devices where
 
 import           GHC.Generics

@@ -2,7 +2,6 @@
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Buttplug.Internal where
@@ -96,6 +95,8 @@ instance FromJSON ErrorCode where
 clientMessageVersion :: Int
 clientMessageVersion = 1
 
+stripPrefix :: String -> String -> String
+stripPrefix s = drop $ length s
 
 ------------------------------------------------
 newtype RawCommand = RawCommand ByteString
@@ -127,36 +128,35 @@ instance FromJSON MotorVibrate where
 
 ------------------------------------------------
 data Rotate = Rotate
-  { index :: Int
-  , duration :: Int
-  , clockwise :: Bool
+  { rotateIndex :: Int
+  , rotateDuration :: Int
+  , rotateClockwise :: Bool
   }
   deriving (Generic, Show, Eq)
 
-
 instance ToJSON Rotate where
-  toJSON = genericToJSON pascalCaseOptions
+  toJSON = genericToJSON pascalCaseOptions { fieldLabelModifier = stripPrefix "rotate" }
 
 
 instance FromJSON Rotate where
-  parseJSON = genericParseJSON pascalCaseOptions
+  parseJSON = genericParseJSON pascalCaseOptions { fieldLabelModifier = stripPrefix "rotate" }
 
 
 ------------------------------------------------
 data LinearActuate = LinearActuate
-  { index :: Int
-  , duration :: Int
-  , position :: Double
+  { linActIndex :: Int
+  , linActDuration :: Int
+  , linActPosition :: Double
   }
   deriving (Generic, Show, Eq)
 
 
 instance ToJSON LinearActuate where
-  toJSON = genericToJSON pascalCaseOptions
+  toJSON = genericToJSON pascalCaseOptions { fieldLabelModifier = stripPrefix "linAct" }
 
 
 instance FromJSON LinearActuate where
-  parseJSON = genericParseJSON pascalCaseOptions
+  parseJSON = genericParseJSON pascalCaseOptions { fieldLabelModifier = stripPrefix "linAct" }
 
 
 ------------------------------------------------
@@ -170,112 +170,112 @@ data LogLevel = LogLevelOff
   deriving (Generic, Show, Eq)
 
 
-stripLogLevel = drop $ length $ ("LogLevel" :: String)
-
-
 instance ToJSON LogLevel where
-  toJSON = genericToJSON $ defaultOptions { constructorTagModifier = stripLogLevel }
+  toJSON = genericToJSON $ defaultOptions { constructorTagModifier = stripPrefix "LogLevel" }
 
 
 instance FromJSON LogLevel where
-  parseJSON = genericParseJSON $ defaultOptions { constructorTagModifier = stripLogLevel }
+  parseJSON = genericParseJSON $ 
+    defaultOptions { constructorTagModifier = stripPrefix "LogLevel" }
 
 
 ------------------------------------------------
 data Message = 
                -- handshake messages
-               RequestServerInfo { id :: Int
-                                 , clientName :: Text
-                                 , messageVersion :: Int
+               RequestServerInfo { msgId :: Int
+                                 , msgClientName :: Text
+                                 , msgMessageVersion :: Int
                                  }
-             | ServerInfo { id :: Int
-                          , serverName :: Text
-                          , majorVersion :: Int
-                          , minorVersion :: Int
-                          , buildVersion :: Int
-                          , messageVersion :: Int
-                          , maxPingTime :: Int
+             | ServerInfo { msgId :: Int
+                          , msgServerName :: Text
+                          , msgMajorVersion :: Int
+                          , msgMinorVersion :: Int
+                          , msgBuildVersion :: Int
+                          , msgMessageVersion :: Int
+                          , msgMaxPingTime :: Int
                           }
                -- status messages
-             | Ok { id :: Int }
-             | Error { id :: Int
-                     , errorMessage :: Text
-                     , errorCode :: ErrorCode
+             | Ok { msgId :: Int }
+             | Error { msgId :: Int
+                     , msgErrorMessage :: Text
+                     , msgErrorCode :: ErrorCode
                      }
-             | Ping { id :: Int }
-             | Test { id :: Int
-                    , testString :: Text }
-             | RequestLog { id :: Int
-                          , logLevel :: LogLevel }
-             | Log { id :: Int
-                   , logLevel :: LogLevel
-                   , logMessage :: Text
+             | Ping { msgId :: Int }
+             | Test { msgId :: Int
+                    , msgTestString :: Text }
+             | RequestLog { msgId :: Int
+                          , msgLogLevel :: LogLevel }
+             | Log { msgId :: Int
+                   , msgLogLevel :: LogLevel
+                   , msgLogMessage :: Text
                    }
                -- enumeration messages
-             | StartScanning { id :: Int }
-             | StopScanning { id :: Int }
-             | ScanningFinished { id :: Int }
-             | RequestDeviceList { id :: Int }
-             | DeviceList { id :: Int
-                          , devices :: [ Device ]
+             | StartScanning { msgId :: Int }
+             | StopScanning { msgId :: Int }
+             | ScanningFinished { msgId :: Int }
+             | RequestDeviceList { msgId :: Int }
+             | DeviceList { msgId :: Int
+                          , msgDevices :: [ Device ]
                           }
-             | DeviceAdded { id :: Int
-                           , deviceName :: Text
-                           , deviceIndex :: Int
-                           , deviceMessages :: Map Dev.DeviceMessageType Dev.MessageAttributes
+             | DeviceAdded { msgId :: Int
+                           , msgDeviceName :: Text
+                           , msgDeviceIndex :: Int
+                           , msgDeviceMessages :: Map Dev.DeviceMessageType Dev.MessageAttributes
                            }
-             | DeviceRemoved { id :: Int
-                             , deviceIndex :: Int
+             | DeviceRemoved { msgId :: Int
+                             , msgDeviceIndex :: Int
                              }
                -- generic device messages
-             | StopDeviceCmd { id :: Int
-                             , deviceIndex :: Int
+             | StopDeviceCmd { msgId :: Int
+                             , msgDeviceIndex :: Int
                              }
-             | StopAllDevices { id :: Int }
+             | StopAllDevices { msgId :: Int }
              -- TODO RawCmd ... how to handle byte array? Spec says it's a JSON array of ints 0-255
-             | VibrateCmd { id :: Int
-                          , deviceIndex :: Int
-                          , speeds :: [ MotorVibrate ]
+             | VibrateCmd { msgId :: Int
+                          , msgDeviceIndex :: Int
+                          , msgSpeeds :: [ MotorVibrate ]
                           }
-             | LinearCmd { id :: Int
-                         , deviceIndex :: Int
-                         , vectors :: [ LinearActuate ]
+             | LinearCmd { msgId :: Int
+                         , msgDeviceIndex :: Int
+                         , msgVectors :: [ LinearActuate ]
                          }
-             | RotateCmd { id :: Int
-                         , deviceIndex :: Int
-                         , rotations :: [ Rotate ]
+             | RotateCmd { msgId :: Int
+                         , msgDeviceIndex :: Int
+                         , msgRotations :: [ Rotate ]
                          }
              -- Specific device messages
-             | KiirooCmd { id :: Int
-                         , deviceIndex :: Int
-                         , command :: Text
+             | KiirooCmd { msgId :: Int
+                         , msgDeviceIndex :: Int
+                         , msgCommand :: Text
                          }
              | FleshlightLaunchFW12Cmd
-                 { id :: Int
-                 , deviceIndex :: Int
-                 , position :: Int
-                 , speed :: Int
+                 { msgId :: Int
+                 , msgDeviceIndex :: Int
+                 , msgPosition :: Int
+                 , msgSpeed :: Int
                  }
              | LovenseCmd
-                 { id :: Int
-                 , deviceIndex :: Int
-                 , command :: Text
+                 { msgId :: Int
+                 , msgDeviceIndex :: Int
+                 , msgCommand :: Text
                  }
              | VorzeA10CycloneCmd
-                 { id :: Int
-                 , deviceIndex :: Int
-                 , speed :: Int
-                 , clockwise :: Bool
+                 { msgId :: Int
+                 , msgDeviceIndex :: Int
+                 , msgSpeed :: Int
+                 , msgClockwise :: Bool
                  }
   deriving (Show, Eq, Generic)
 
 
 instance ToJSON Message where
-  toJSON = genericToJSON $ pascalCaseOptions { sumEncoding = ObjectWithSingleField }
+  toJSON = genericToJSON $ pascalCaseOptions { sumEncoding = ObjectWithSingleField
+                                             , fieldLabelModifier = stripPrefix "msg" }
 
 
 instance FromJSON Message where
-  parseJSON = genericParseJSON $ pascalCaseOptions { sumEncoding = ObjectWithSingleField }
+  parseJSON = genericParseJSON $ pascalCaseOptions { sumEncoding = ObjectWithSingleField
+                                                   , fieldLabelModifier = stripPrefix "msg" }
 
 
 --------------------------------------------------------------------------------
@@ -315,7 +315,7 @@ stopDevice dev@(Device {deviceName=dName, deviceIndex=dIdx})
   -- temporary hack until server handles StopDeviceCmd for youou correctly
   | "Youou" `T.isInfixOf` dName = stopYouou dev
   | otherwise = do
-      let msg = StopDeviceCmd { id = 1, deviceIndex = dIdx }
+      let msg = StopDeviceCmd { msgId = 1, msgDeviceIndex = dIdx }
       sendMessage msg
   where
     stopYouou :: Device -> ButtPlugM ()
@@ -324,10 +324,10 @@ stopDevice dev@(Device {deviceName=dName, deviceIndex=dIdx})
 
 vibrateOnlyMotor :: Device -> Double -> ButtPlugM ()
 vibrateOnlyMotor (Device {deviceIndex = dIdx}) speed = do
-  let msg = VibrateCmd { id = 1
-                       , deviceIndex = dIdx
-                       , speeds = [MotorVibrate { index = 0
-                                                , speed = speed }]
+  let msg = VibrateCmd { msgId = 1
+                       , msgDeviceIndex = dIdx
+                       , msgSpeeds = [MotorVibrate { index = 0
+                                                   , speed = speed }]
                        }
   con <- getConnection
   sendMessage msg
@@ -369,9 +369,9 @@ runButtPlugApp (WebSocketConnector host port) (ButtPlugApp handleDeviceAdded) =
       close
   where
     reqServerInfo = RequestServerInfo
-                      { id = 1
-                      , clientName = "haskell"
-                      , messageVersion = clientMessageVersion }
+                      { msgId = 1
+                      , msgClientName = "haskell"
+                      , msgMessageVersion = clientMessageVersion }
     reqDeviceList = RequestDeviceList 1
     startScanning = StartScanning 1
 
