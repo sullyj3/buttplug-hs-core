@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE LambdaCase #-}
@@ -27,6 +28,9 @@ import           Data.Foldable       (traverse_)
 import           Control.Monad       (forever)
 import           Control.Concurrent (forkIO)
 import           Control.Concurrent.Async
+import           Control.Concurrent.STM
+import           Control.Concurrent.STM.TVar
+import           Control.Concurrent.STM.TChan
 import           Data.Void
 import           Control.Monad.Trans.Reader
 import           Control.Monad.IO.Class
@@ -49,7 +53,7 @@ import           Data.Aeson          ( ToJSON(..)
                                      , genericParseJSON
                                      , encode
                                      , decode)
--- import qualified Data.Map.Strict     as Map
+import qualified Data.Map.Strict     as Map
 import           Data.Map.Strict     (Map)
 import           Data.ByteString.Lazy (fromStrict)
 import           UnliftIO.Exception
@@ -290,14 +294,10 @@ receiveMsgs con = do
     Nothing -> throwString "Couldn't decode the message from the server"
 
 
-sendMessage :: Message -> ButtPlugM ()
-sendMessage msg = sendMessages [msg]
+sendMessage :: (Int -> Message) -> ButtPlugM ()
+sendMessage msg = do
+  outGoing <- getOutgoingChan
 
-
-sendMessages :: [Message] -> ButtPlugM ()
-sendMessages  msgs = do
-  (WebSocketConnection con) <- getConnection
-  liftIO $ WS.sendTextData con (encode msgs)
 
 
 close :: ButtPlugM ()
@@ -307,7 +307,7 @@ close = do
 
 
 getConnection :: ButtPlugM ButtPlugConnection
-getConnection = ask
+getConnection = con <$> ask
 
 
 stopDevice :: Device -> ButtPlugM ()
@@ -324,13 +324,39 @@ stopDevice dev@(Device {deviceName=dName, deviceIndex=dIdx})
 
 vibrateOnlyMotor :: Device -> Double -> ButtPlugM ()
 vibrateOnlyMotor (Device {deviceIndex = dIdx}) speed = do
-  let msg = VibrateCmd { id = 1
-                       , deviceIndex = dIdx
-                       , speeds = [MotorVibrate { index = 0
-                                                , speed = speed }]
-                       }
-  con <- getConnection
+  let msg = \id ->
+        VibrateCmd { id = id
+                   , deviceIndex = dIdx
+                   , speeds = [MotorVibrate { index = 0
+                                            , speed = speed }]
+                   }
   sendMessage msg
+
+sendMessageExpectResponse :: Message
+                          -> ButtPlugM ()
+sendMessageExpectResponse msg = do
+  let msgId :: Int
+      msgId = id msg
+  sendMessage msg
+  awaitingResponses <- getAwaitingResponses
+  liftio . atomically do responseChan <- newTChan
+                         modifyTVar (Map.insert (id msg) responseChan)
+
+
+
+
+-- Each time the client sends a message expecting a response, it registers that expectation in this map.
+-- We map the message id of the expected response to a channel to the thread waiting on that response.
+-- After notifying the thread of the arrival of the message, we remove the entry from the map.
+type AwaitingResponseMap = (Map Int (TChan Message))
+
+getAwaitingResponses :: ButtPlugM (TVar AwaitingResponseMap)
+getAwaitingResponses = clientAwaitingResponse <$> ask
+
+data Client = Client { clientCon :: ButtPlugConnection
+                     , clientAwaitingResponse :: TVar AwaitingResponseMap
+                     , clientOutgoingQ :: TChan Message
+                     }
 
 
 data ButtPlugConnection = WebSocketConnection { con  :: WS.Connection
@@ -342,7 +368,7 @@ data Connector = WebSocketConnector { wsConnectorHost :: String
                                     }
 
 
-type ButtPlugM a = ReaderT ButtPlugConnection IO a 
+type ButtPlugM a = ReaderT Client IO a
 
 
 data ButtPlugApp = ButtPlugApp 
@@ -363,6 +389,7 @@ runButtPlugApp (WebSocketConnector host port) (ButtPlugApp handleDeviceAdded) =
     in
     withWorker (handleReceivedData wsCon) $ runButtPlugM con do
       liftIO $ putStrLn "Connected!"
+      awaitingResponse <- liftIO . atomically $ newTVar (mempty :: Map Int (Async ()))
       sendMessages [reqServerInfo, reqDeviceList, startScanning]
       liftIO $ T.putStrLn "Press enter to exit"
       liftIO getLine
@@ -397,8 +424,7 @@ runButtPlugApp (WebSocketConnector host port) (ButtPlugApp handleDeviceAdded) =
                                      (handleDeviceAdded dev)
           pure ()
 
-        msg -> do
-          putStrLn "No handler supplied"
+        msg -> putStrLn "No handler supplied"
       putStrLn "-------------------"
 
 
@@ -417,3 +443,32 @@ withWorker ::
   -> IO a
   -> IO a
 withWorker worker cont = either absurd Prelude.id <$> race worker cont
+
+
+-- messages that we may expect as a response to other messages
+isServerInfo :: Message -> Bool
+isServerInfo = \case
+  (ServerInfo {}) -> True
+  _               -> False
+
+isOk  :: Message -> Bool
+isOk = \case
+  (Ok {}) -> True
+  _       -> False
+
+isTest :: Message -> Bool
+isTest = \case
+  (Test {}) -> True
+  _         -> False
+
+isScanningFinished :: Message -> Bool
+isScanningFinished = \case
+  (ScanningFinished {}) -> True
+  _                     -> False
+
+isDeviceList :: Message -> Bool
+isDeviceList = \case
+  (DeviceList {}) -> True
+  _              -> False
+
+
