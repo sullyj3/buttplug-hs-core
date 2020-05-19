@@ -30,6 +30,7 @@ dependencies:
 - mtl
 - network
 - random
+- stm
 - text
 - transformers
 - containers

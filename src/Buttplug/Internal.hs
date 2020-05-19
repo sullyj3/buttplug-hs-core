@@ -23,9 +23,9 @@ module Buttplug.Internal where
                 , vibrateOnlyMotor
                 )-} 
 
-import           Data.Foldable       (traverse_)
+import           Data.Foldable       (traverse_, for_)
 import           Control.Monad       (forever)
-import           Control.Concurrent (forkIO)
+import           Control.Concurrent (forkIO, ThreadId)
 import           Control.Concurrent.Async
 import           Control.Concurrent.STM
 import           Control.Concurrent.STM.TVar
@@ -55,7 +55,7 @@ import           Data.Aeson          ( ToJSON(..)
 import qualified Data.Map.Strict     as Map
 import           Data.Map.Strict     (Map)
 import           Data.ByteString.Lazy (fromStrict)
-import           UnliftIO.Exception
+import           UnliftIO.Exception  (throwString)
 
 import qualified Buttplug.Devices    as Dev
 import           Buttplug.Devices    (Device(..))
@@ -284,7 +284,7 @@ instance FromJSON Message where
 
 --------------------------------------------------------------------------------
 
-
+-- todo: refactor to be ButtPlugConnection -> IO [Message]
 receiveMsgs :: WS.Connection -> IO [Message]
 receiveMsgs con = do
   received <- WS.receiveData con
@@ -294,9 +294,72 @@ receiveMsgs con = do
     Nothing -> throwString "Couldn't decode the message from the server"
 
 
-sendMessage :: (Int -> Message) -> ButtPlugM ()
+sendMessage :: (Int -> Message) -> ButtPlugM Message
 sendMessage msg = do
   outGoing <- getOutgoingChan
+  liftIO $ atomically do
+    responseChan <- newTChan :: STM (TChan (Message))
+    writeTChan outGoing (msg, responseChan)
+    readTChan responseChan
+
+handleIO :: ButtPlugM Void
+handleIO = do
+  client <- ask
+  liftIO $ concurrently (runButtPlugM client $ handleIncoming (const $ pure ()))
+                        (runButtPlugM client handleOutGoing)
+
+  forever $ pure ()
+
+handleOutGoing :: ButtPlugM Void
+handleOutGoing = do
+  Client { clientCon = con
+         , clientOutgoingQ = outGoing
+         , clientAwaitingResponse = awaitingResponse
+         , nextMsgId = nextMsgId } <- ask
+
+  liftIO $ forever do
+    msg <- atomically do
+      (outGoingMsg, responseChan) <- readTChan outGoing
+      msgId <- readTVar nextMsgId
+      modifyTVar' nextMsgId (+1)
+      modifyTVar' awaitingResponse (Map.insert msgId responseChan)
+      pure $ outGoingMsg msgId
+    sendData (encode msg) con
+  where
+    sendData d = \case
+      WebSocketConnection con -> WS.sendTextData con d
+
+handleIncoming :: (Message -> ButtPlugM ()) -> ButtPlugM Void
+handleIncoming newMsgHandler = do
+  client@Client { clientCon = WebSocketConnection con
+                , clientOutgoingQ = outGoing
+                , clientAwaitingResponse = awaitingResponse
+                , nextMsgId = nextMsgId } <- ask
+
+  liftIO $ forever do
+    messages <- receiveMsgs con
+    for_ messages \msg -> do
+
+      -- if there is a thread awaiting this message as a response, send the
+      -- response to the thread and ignore it. Otherwise, pass it to the 
+      -- provided handler
+      shouldHandle <- atomically do
+        awaitingResponseMap <- readTVar awaitingResponse
+        case Map.lookup (msgId msg) awaitingResponseMap of
+          Just responseChan -> do
+            writeTChan responseChan msg
+            modifyTVar awaitingResponse (Map.delete $ msgId msg)
+            pure Nothing
+          Nothing -> pure $ Just msg
+
+      case shouldHandle of
+        Just msg -> liftIO do
+                      putStrLn "passing message to handler"
+                      forkIO $ runButtPlugM client (newMsgHandler msg)
+                      pure ()
+        Nothing -> putStrLn "passed reply to the thread that was expecting it"
+
+getOutgoingChan = clientOutgoingQ <$> ask
 
 
 
@@ -307,7 +370,7 @@ close = do
 
 
 getConnection :: ButtPlugM ButtPlugConnection
-getConnection = con <$> ask
+getConnection = clientCon <$> ask
 
 
 stopDevice :: Device -> ButtPlugM ()
@@ -315,8 +378,9 @@ stopDevice dev@(Device {deviceName=dName, deviceIndex=dIdx})
   -- temporary hack until server handles StopDeviceCmd for youou correctly
   | "Youou" `T.isInfixOf` dName = stopYouou dev
   | otherwise = do
-      let msg = StopDeviceCmd { msgId = 1, msgDeviceIndex = dIdx }
-      sendMessage msg
+      let msg = \msgId -> StopDeviceCmd { msgId = msgId, msgDeviceIndex = dIdx }
+      Ok n <- sendMessage msg -- todo: proper exception handling
+      pure ()
   where
     stopYouou :: Device -> ButtPlugM ()
     stopYouou dev = vibrateOnlyMotor dev $ 1/255
@@ -329,19 +393,8 @@ vibrateOnlyMotor (Device {deviceIndex = dIdx}) speed = do
                                , msgSpeeds = [MotorVibrate { index = 0
                                                            , speed = speed }]
                                }
-  sendMessage msg
-
-sendMessageExpectResponse :: Message
-                          -> ButtPlugM ()
-sendMessageExpectResponse msg = do
-  let msgId :: Int
-      msgId = id msg
-  sendMessage msg
-  awaitingResponses <- getAwaitingResponses
-  liftio . atomically do responseChan <- newTChan
-                         modifyTVar (Map.insert (id msg) responseChan)
-
-
+  Ok n <- sendMessage msg
+  pure ()
 
 
 -- Each time the client sends a message expecting a response, it registers that expectation in this map.
@@ -354,7 +407,8 @@ getAwaitingResponses = clientAwaitingResponse <$> ask
 
 data Client = Client { clientCon :: ButtPlugConnection
                      , clientAwaitingResponse :: TVar AwaitingResponseMap
-                     , clientOutgoingQ :: TChan Message
+                     , nextMsgId :: TVar Int
+                     , clientOutgoingQ :: TChan (Int -> Message, TChan Message)
                      }
 
 
@@ -375,21 +429,29 @@ data ButtPlugApp = ButtPlugApp
   }
 
 
-runButtPlugM :: ButtPlugConnection -> ButtPlugM a -> IO a
-runButtPlugM con bpm = runReaderT bpm con
+runButtPlugM :: Client -> ButtPlugM a -> IO a
+runButtPlugM client bpm = runReaderT bpm client
+
+newClient :: ButtPlugConnection -> IO Client
+newClient con = atomically $
+  Client <$> pure con
+         <*> newTVar mempty
+         <*> newTVar 1
+         <*> newTChan
 
 
 runButtPlugApp :: Connector
                -> ButtPlugApp
                -> IO ()
 runButtPlugApp (WebSocketConnector host port) (ButtPlugApp handleDeviceAdded) = 
-  withSocketsDo $ WS.runClient host port "/" \wsCon ->
+  withSocketsDo $ WS.runClient host port "/" \wsCon -> do
     let con = WebSocketConnection wsCon
-    in
-    withWorker (handleReceivedData wsCon) $ runButtPlugM con do
-      liftIO $ putStrLn "Connected!"
-      awaitingResponse <- liftIO . atomically $ newTVar (mempty :: Map Int (Async ()))
-      sendMessages [reqServerInfo, reqDeviceList, startScanning]
+    
+    client <- newClient con
+
+    putStrLn "Connected to the Buttplug server."
+
+    withWorker (runButtPlugM client handleIO) $ runButtPlugM client do
       liftIO $ T.putStrLn "Press enter to exit"
       liftIO getLine
       close
@@ -401,39 +463,6 @@ runButtPlugApp (WebSocketConnector host port) (ButtPlugApp handleDeviceAdded) =
     reqDeviceList = RequestDeviceList 1
     startScanning = StartScanning 1
 
-    handleReceivedData :: WS.Connection -> IO Void
-    handleReceivedData con = do
-      putStrLn "Listening for messages from server"
-      forever $ receiveMsgs con >>= handleMsgs con
-
-    handleMsgs :: WS.Connection -> [Message] -> IO ()
-    handleMsgs con msgs = do
-      putStrLn "Received some messages."
-      traverse_ (handleMsg con) msgs
-
-    --handleMsg :: ButtPlugConnection -> Message -> IO ()
-    handleMsg :: WS.Connection -> Message -> IO ()
-    handleMsg con msg = do
-      putStrLn "Handling message:"
-      print $ msg
-      case msg of
-        (DeviceAdded _msgId name idx allowedMsgs) -> do
-          let dev = Dev.Device name idx allowedMsgs
-          _ <- forkIO $ runButtPlugM (WebSocketConnection con)
-                                     (handleDeviceAdded dev)
-          pure ()
-
-        msg -> putStrLn "No handler supplied"
-      putStrLn "-------------------"
-
-
-runClient :: String
-          -> Int
-          -> ButtPlugM ()
-          -> IO ()
-runClient host port bpApp = withSocketsDo $ WS.runClient host port "/" \wsCon -> do
-  putStrLn "Connected!"
-  runButtPlugM (WebSocketConnection wsCon) bpApp
 
 
 -- From https://mazzo.li/posts/threads-resources.html
@@ -445,6 +474,7 @@ withWorker worker cont = either absurd Prelude.id <$> race worker cont
 
 
 -- messages that we may expect as a response to other messages
+
 isServerInfo :: Message -> Bool
 isServerInfo = \case
   (ServerInfo {}) -> True
