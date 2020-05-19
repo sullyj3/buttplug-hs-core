@@ -39,6 +39,7 @@ import           Data.Aeson          ( ToJSON(..)
                                      , FromJSON(..)
                                      , genericToJSON
                                      , Options(..)
+                                     , defaultOptions
                                      , SumEncoding(..)
                                      , genericParseJSON
                                      , encode
@@ -99,6 +100,23 @@ instance FromJSON MotorVibrate where
   parseJSON = genericParseJSON pascalCaseOptions
 
 ------------------------------------------------
+data LogLevel = LogLevelOff
+              | LogLevelFatal
+              | LogLevelError
+              | LogLevelWarn
+              | LogLevelInfo
+              | LogLevelDebug
+              | LogLevelTrace
+  deriving (Generic, Show, Eq)
+
+stripLogLevel = drop $ length $ ("LogLevel" :: String)
+
+instance ToJSON LogLevel where
+  toJSON = genericToJSON $ defaultOptions { constructorTagModifier = stripLogLevel }
+
+instance FromJSON LogLevel where
+  parseJSON = genericParseJSON $ defaultOptions { constructorTagModifier = stripLogLevel }
+------------------------------------------------
 data Message = 
                -- handshake messages
                RequestServerInfo { id :: Int
@@ -120,6 +138,10 @@ data Message =
                      , errorCode :: ErrorCode
                      }
              | Ping { id :: Int }
+             | Test { id :: Int
+                    , testString :: Text }
+             | RequestLog { id :: Int
+                          , logLevel :: LogLevel }
                -- enumeration messages
              | StartScanning { id :: Int }
              | RequestDeviceList { id :: Int }
