@@ -288,7 +288,7 @@ instance FromJSON Message where
 receiveMsgs :: WS.Connection -> IO [Message]
 receiveMsgs con = do
   received <- WS.receiveData con
-  T.putStrLn $ "Server sent: " <> decodeUtf8 received
+  --T.putStrLn $ "Server sent: " <> decodeUtf8 received
   case decode $ fromStrict received :: Maybe [Message] of
     Just msgs -> pure msgs
     Nothing -> throwString "Couldn't decode the message from the server"
@@ -296,14 +296,32 @@ receiveMsgs con = do
 
 sendMessage :: (Int -> Message) -> ButtPlugM Message
 sendMessage msg = do
+  liftIO $ putStrLn "sendMessage called"
   outGoing <- getOutgoingChan
-  liftIO $ atomically do
+  responseChan <- liftIO $ atomically do
     responseChan <- newTChan :: STM (TChan (Message))
     writeTChan outGoing (msg, responseChan)
-    readTChan responseChan
+    pure responseChan
+
+  liftIO $ atomically $ readTChan responseChan
+
+-- Should return a message containing the server info
+handshake :: ButtPlugM Message
+handshake = sendMessage \msgId ->
+    RequestServerInfo { msgId = msgId 
+                      -- TODO this should be passed in by the user
+                      , msgClientName = "Buttplug-hs"
+                      , msgMessageVersion = 1 
+                      }
+
+startScanning :: ButtPlugM ()
+startScanning = do 
+  Ok n <- sendMessage \msgId -> StartScanning { msgId = msgId }
+  pure ()
 
 handleIO :: ButtPlugM Void
 handleIO = do
+  liftIO $ putStrLn "handleIO called"
   client <- ask
   liftIO $ concurrently (runButtPlugM client $ handleIncoming (const $ pure ()))
                         (runButtPlugM client handleOutGoing)
@@ -312,33 +330,47 @@ handleIO = do
 
 handleOutGoing :: ButtPlugM Void
 handleOutGoing = do
+  liftIO $ putStrLn "handleOutGoing called"
   Client { clientCon = con
          , clientOutgoingQ = outGoing
          , clientAwaitingResponse = awaitingResponse
          , nextMsgId = nextMsgId } <- ask
 
   liftIO $ forever do
-    msg <- atomically do
-      (outGoingMsg, responseChan) <- readTChan outGoing
-      msgId <- readTVar nextMsgId
-      modifyTVar' nextMsgId (+1)
-      modifyTVar' awaitingResponse (Map.insert msgId responseChan)
-      pure $ outGoingMsg msgId
-    sendData (encode msg) con
+    mMsg <- atomically $ tryReadTChan outGoing >>= \case
+      Just (outGoingMsg, responseChan) -> do
+        msgId <- readTVar nextMsgId
+        modifyTVar' nextMsgId (+1)
+        modifyTVar' awaitingResponse (Map.insert msgId responseChan)
+        pure $ Just $ outGoingMsg msgId
+      Nothing -> pure Nothing
+
+    case mMsg of
+      Just msg -> do
+        liftIO $ putStrLn $ "Sending: "
+        liftIO $ print msg
+        sendData (encode [msg]) con
+      Nothing -> pure ()
+
   where
     sendData d = \case
       WebSocketConnection con -> WS.sendTextData con d
 
 handleIncoming :: (Message -> ButtPlugM ()) -> ButtPlugM Void
 handleIncoming newMsgHandler = do
+  liftIO $ putStrLn "handleIncoming called"
   client@Client { clientCon = WebSocketConnection con
                 , clientOutgoingQ = outGoing
                 , clientAwaitingResponse = awaitingResponse
                 , nextMsgId = nextMsgId } <- ask
 
   liftIO $ forever do
+    putStrLn "a"
     messages <- receiveMsgs con
+    putStrLn "b"
     for_ messages \msg -> do
+
+      print msg
 
       -- if there is a thread awaiting this message as a response, send the
       -- response to the thread and ignore it. Otherwise, pass it to the 
@@ -453,17 +485,10 @@ runButtPlugApp (WebSocketConnector host port) (ButtPlugApp handleDeviceAdded) =
 
     withWorker (runButtPlugM client handleIO) $ runButtPlugM client do
       liftIO $ T.putStrLn "Press enter to exit"
+      handshake
+      startScanning
       liftIO getLine
       close
-  where
-    reqServerInfo = RequestServerInfo
-                      { msgId = 1
-                      , msgClientName = "haskell"
-                      , msgMessageVersion = clientMessageVersion }
-    reqDeviceList = RequestDeviceList 1
-    startScanning = StartScanning 1
-
-
 
 -- From https://mazzo.li/posts/threads-resources.html
 withWorker ::
