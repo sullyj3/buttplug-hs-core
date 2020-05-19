@@ -372,11 +372,6 @@ runButtPlugApp (WebSocketConnector host port) (ButtPlugApp handleDeviceAdded) =
           putStrLn "No handler supplied"
       putStrLn "-------------------"
 
-void ma = do
-  _ <- ma
-  pure ()
-
-
 runClient :: String
           -> Int
           -> ButtPlugM ()
