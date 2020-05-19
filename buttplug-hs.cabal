@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 81cf07d7d2760b4463ff5ac1927bcbfcd7f75f00d4bbd32b0a7ed1f1962e9e8f
+-- hash: 591b11c7b10a3402874b0634507d6a007c791659f347b08d4cfcda2cbe8f6c53
 
 name:           buttplug-hs
 version:        0.1.0.0
@@ -47,6 +47,7 @@ library
     , mtl
     , network
     , random
+    , relude
     , text
     , transformers
     , unliftio
@@ -73,6 +74,7 @@ executable buttplug-hs-exe
     , mtl
     , network
     , random
+    , relude
     , text
     , transformers
     , unliftio
@@ -100,6 +102,7 @@ test-suite buttplug-hs-test
     , mtl
     , network
     , random
+    , relude
     , text
     , transformers
     , unliftio

@@ -58,13 +58,13 @@ import qualified Buttplug.Devices    as Dev
 import           Buttplug.Devices    (Device(..))
 import           Buttplug.Internal.JSONUtils
 
-
 data ErrorCode = ERROR_UNKNOWN
                | ERROR_INIT
                | ERROR_PING
                | ERROR_MSG
                | ERROR_DEVICE
                deriving (Enum, Show, Eq)
+
 
 errCodeFromInt :: Int -> Maybe ErrorCode
 errCodeFromInt = \case
@@ -75,11 +75,14 @@ errCodeFromInt = \case
   4 -> Just ERROR_DEVICE
   _ -> Nothing
 
+
 fromErrCode :: ErrorCode -> Int
 fromErrCode = fromEnum
 
+
 instance ToJSON ErrorCode where
   toJSON = toJSON . fromErrCode
+
 
 instance FromJSON ErrorCode where
   parseJSON v = do
@@ -88,19 +91,24 @@ instance FromJSON ErrorCode where
       Nothing -> fail "Error code should be an int"
       Just e -> pure e
 
+
 ------------------------------------------------
 clientMessageVersion :: Int
 clientMessageVersion = 1
+
 
 ------------------------------------------------
 newtype RawCommand = RawCommand ByteString
   deriving (Generic, Show, Eq)
 
+
 instance ToJSON RawCommand where
   toJSON (RawCommand bs) = toJSON $ BS.unpack bs
 
+
 instance FromJSON RawCommand where
   parseJSON j = RawCommand . BS.pack <$> parseJSON j
+
 
 ------------------------------------------------
 data MotorVibrate = MotorVibrate { index :: Int
@@ -108,11 +116,14 @@ data MotorVibrate = MotorVibrate { index :: Int
                                  }
   deriving (Generic, Show, Eq)
 
+
 instance ToJSON MotorVibrate where
   toJSON = genericToJSON pascalCaseOptions
 
+
 instance FromJSON MotorVibrate where
   parseJSON = genericParseJSON pascalCaseOptions
+
 
 ------------------------------------------------
 data Rotate = Rotate
@@ -122,11 +133,14 @@ data Rotate = Rotate
   }
   deriving (Generic, Show, Eq)
 
+
 instance ToJSON Rotate where
   toJSON = genericToJSON pascalCaseOptions
 
+
 instance FromJSON Rotate where
   parseJSON = genericParseJSON pascalCaseOptions
+
 
 ------------------------------------------------
 data LinearActuate = LinearActuate
@@ -136,11 +150,14 @@ data LinearActuate = LinearActuate
   }
   deriving (Generic, Show, Eq)
 
+
 instance ToJSON LinearActuate where
   toJSON = genericToJSON pascalCaseOptions
 
+
 instance FromJSON LinearActuate where
   parseJSON = genericParseJSON pascalCaseOptions
+
 
 ------------------------------------------------
 data LogLevel = LogLevelOff
@@ -152,13 +169,18 @@ data LogLevel = LogLevelOff
               | LogLevelTrace
   deriving (Generic, Show, Eq)
 
+
 stripLogLevel = drop $ length $ ("LogLevel" :: String)
+
 
 instance ToJSON LogLevel where
   toJSON = genericToJSON $ defaultOptions { constructorTagModifier = stripLogLevel }
 
+
 instance FromJSON LogLevel where
   parseJSON = genericParseJSON $ defaultOptions { constructorTagModifier = stripLogLevel }
+
+
 ------------------------------------------------
 data Message = 
                -- handshake messages
@@ -248,15 +270,16 @@ data Message =
   deriving (Show, Eq, Generic)
 
 
-
-
 instance ToJSON Message where
   toJSON = genericToJSON $ pascalCaseOptions { sumEncoding = ObjectWithSingleField }
+
 
 instance FromJSON Message where
   parseJSON = genericParseJSON $ pascalCaseOptions { sumEncoding = ObjectWithSingleField }
 
+
 --------------------------------------------------------------------------------
+
 
 receiveMsgs :: WS.Connection -> IO [Message]
 receiveMsgs con = do
@@ -265,19 +288,23 @@ receiveMsgs con = do
   case decode $ fromStrict received :: Maybe [Message] of
     Just msgs -> pure msgs
     Nothing -> throwString "Couldn't decode the message from the server"
-  
+
+
 sendMessage :: Message -> ButtPlugM ()
 sendMessage msg = sendMessages [msg]
+
 
 sendMessages :: [Message] -> ButtPlugM ()
 sendMessages  msgs = do
   (WebSocketConnection con) <- getConnection
   liftIO $ WS.sendTextData con (encode msgs)
 
+
 close :: ButtPlugM ()
 close = do
   (WebSocketConnection con) <- getConnection
   liftIO $ WS.sendClose con ("Bye!" :: Text)
+
 
 getConnection :: ButtPlugM ButtPlugConnection
 getConnection = ask
@@ -294,6 +321,7 @@ stopDevice dev@(Device {deviceName=dName, deviceIndex=dIdx})
     stopYouou :: Device -> ButtPlugM ()
     stopYouou dev = vibrateOnlyMotor dev $ 1/255
 
+
 vibrateOnlyMotor :: Device -> Double -> ButtPlugM ()
 vibrateOnlyMotor (Device {deviceIndex = dIdx}) speed = do
   let msg = VibrateCmd { id = 1
@@ -304,21 +332,27 @@ vibrateOnlyMotor (Device {deviceIndex = dIdx}) speed = do
   con <- getConnection
   sendMessage msg
 
+
 data ButtPlugConnection = WebSocketConnection { con  :: WS.Connection
                                               }
+
 
 data Connector = WebSocketConnector { wsConnectorHost :: String
                                     , wsConnectorPort :: Int 
                                     }
 
+
 type ButtPlugM a = ReaderT ButtPlugConnection IO a 
+
 
 data ButtPlugApp = ButtPlugApp 
   { handleDeviceAdded :: Device -> ButtPlugM ()
   }
 
+
 runButtPlugM :: ButtPlugConnection -> ButtPlugM a -> IO a
 runButtPlugM con bpm = runReaderT bpm con
+
 
 runButtPlugApp :: Connector
                -> ButtPlugApp
@@ -331,9 +365,8 @@ runButtPlugApp (WebSocketConnector host port) (ButtPlugApp handleDeviceAdded) =
       liftIO $ putStrLn "Connected!"
       sendMessages [reqServerInfo, reqDeviceList, startScanning]
       liftIO $ T.putStrLn "Press enter to exit"
-      _ <- liftIO getLine
+      liftIO getLine
       close
-
   where
     reqServerInfo = RequestServerInfo
                       { id = 1
@@ -368,6 +401,7 @@ runButtPlugApp (WebSocketConnector host port) (ButtPlugApp handleDeviceAdded) =
           putStrLn "No handler supplied"
       putStrLn "-------------------"
 
+
 runClient :: String
           -> Int
           -> ButtPlugM ()
@@ -376,13 +410,10 @@ runClient host port bpApp = withSocketsDo $ WS.runClient host port "/" \wsCon ->
   putStrLn "Connected!"
   runButtPlugM (WebSocketConnection wsCon) bpApp
 
+
 -- From https://mazzo.li/posts/threads-resources.html
 withWorker ::
      IO Void -- ^ Worker to run
   -> IO a
   -> IO a
 withWorker worker cont = either absurd Prelude.id <$> race worker cont
-
--- "{\"DeviceName\":\"Youou Wand Vibrator\",\"DeviceMessages\":{\"SingleMotorVibrateCmd\":{},\"VibrateCmd\":{\"FeatureCount\":1},\"StopDeviceCmd\":{}},\"DeviceIndex\":1,\"Id\":0}}"
-
---------------------------------------------------------------------------------
