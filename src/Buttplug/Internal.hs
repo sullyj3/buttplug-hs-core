@@ -26,6 +26,8 @@ module Buttplug.Internal where
 import           Data.Foldable       (traverse_)
 import           Control.Monad       (forever)
 import           Control.Concurrent (forkIO)
+import           Control.Concurrent.Async
+import           Data.Void
 import           Control.Monad.Trans.Reader
 import           Control.Monad.IO.Class
 import           Data.Text.Encoding  (decodeUtf8)
@@ -273,7 +275,7 @@ sendMessages  msgs = do
   liftIO $ WS.sendTextData con (encode msgs)
 
 close :: ButtPlugM ()
-close  = do
+close = do
   (WebSocketConnection con) <- getConnection
   liftIO $ WS.sendClose con ("Bye!" :: Text)
 
@@ -322,31 +324,25 @@ runButtPlugApp :: Connector
                -> ButtPlugApp
                -> IO ()
 runButtPlugApp (WebSocketConnector host port) (ButtPlugApp handleDeviceAdded) = 
-  withSocketsDo $ WS.runClient host port "/" \wsCon -> do
-    putStrLn "Connected!"
+  withSocketsDo $ WS.runClient host port "/" \wsCon ->
+    let con = WebSocketConnection wsCon
+    in
+    withWorker (handleReceivedData wsCon) $ runButtPlugM con do
+      liftIO $ putStrLn "Connected!"
+      sendMessages [reqServerInfo, reqDeviceList, startScanning]
+      liftIO $ T.putStrLn "Press enter to exit"
+      _ <- liftIO getLine
+      close
 
-    let
-        con = WebSocketConnection wsCon
-        reqServerInfo = RequestServerInfo
-                          { id = 1
-                          , clientName = "haskell"
-                          , messageVersion = clientMessageVersion }
-        reqDeviceList = RequestDeviceList 1
-        startScanning = StartScanning 1
-
-    -- WS.sendTextData con (encode [reqServerInfo, reqDeviceList, startScanning])
-    runButtPlugM con $ sendMessages [reqServerInfo, reqDeviceList, startScanning]
-
-    _ <- forkIO $ handleReceivedData wsCon
-
-    T.putStrLn "Press enter to exit"
-    _ <- getLine
-    liftIO $ WS.sendClose wsCon ("Bye!" :: Text)
-
-    pure ()
   where
+    reqServerInfo = RequestServerInfo
+                      { id = 1
+                      , clientName = "haskell"
+                      , messageVersion = clientMessageVersion }
+    reqDeviceList = RequestDeviceList 1
+    startScanning = StartScanning 1
 
-    handleReceivedData :: WS.Connection -> IO ()
+    handleReceivedData :: WS.Connection -> IO Void
     handleReceivedData con = do
       putStrLn "Listening for messages from server"
       forever $ receiveMsgs con >>= handleMsgs con
@@ -377,10 +373,15 @@ runClient :: String
           -> ButtPlugM ()
           -> IO ()
 runClient host port bpApp = withSocketsDo $ WS.runClient host port "/" \wsCon -> do
-    putStrLn "Connected!"
-    app wsCon
-  where -- app = bpApp . WebSocketConnection
-        app wsCon = runReaderT bpApp (WebSocketConnection wsCon)
+  putStrLn "Connected!"
+  runButtPlugM (WebSocketConnection wsCon) bpApp
+
+-- From https://mazzo.li/posts/threads-resources.html
+withWorker ::
+     IO Void -- ^ Worker to run
+  -> IO a
+  -> IO a
+withWorker worker cont = either absurd Prelude.id <$> race worker cont
 
 -- "{\"DeviceName\":\"Youou Wand Vibrator\",\"DeviceMessages\":{\"SingleMotorVibrateCmd\":{},\"VibrateCmd\":{\"FeatureCount\":1},\"StopDeviceCmd\":{}},\"DeviceIndex\":1,\"Id\":0}}"
 
