@@ -100,6 +100,34 @@ instance FromJSON MotorVibrate where
   parseJSON = genericParseJSON pascalCaseOptions
 
 ------------------------------------------------
+data Rotate = Rotate
+  { index :: Int
+  , duration :: Int
+  , clockwise :: Bool
+  }
+  deriving (Generic, Show, Eq)
+
+instance ToJSON Rotate where
+  toJSON = genericToJSON pascalCaseOptions
+
+instance FromJSON Rotate where
+  parseJSON = genericParseJSON pascalCaseOptions
+
+------------------------------------------------
+data LinearActuate = LinearActuate
+  { index :: Int
+  , duration :: Int
+  , position :: Double
+  }
+  deriving (Generic, Show, Eq)
+
+instance ToJSON LinearActuate where
+  toJSON = genericToJSON pascalCaseOptions
+
+instance FromJSON LinearActuate where
+  parseJSON = genericParseJSON pascalCaseOptions
+
+------------------------------------------------
 data LogLevel = LogLevelOff
               | LogLevelFatal
               | LogLevelError
@@ -142,8 +170,14 @@ data Message =
                     , testString :: Text }
              | RequestLog { id :: Int
                           , logLevel :: LogLevel }
+             | Log { id :: Int
+                   , logLevel :: LogLevel
+                   , logMessage :: Text
+                   }
                -- enumeration messages
              | StartScanning { id :: Int }
+             | StopScanning { id :: Int }
+             | ScanningFinished { id :: Int }
              | RequestDeviceList { id :: Int }
              | DeviceList { id :: Int
                           , devices :: [ Device ]
@@ -154,14 +188,48 @@ data Message =
                            , deviceMessages :: Map Dev.DeviceMessageType Dev.MessageAttributes
                            }
              | DeviceRemoved { id :: Int
-                             , deviceIndex :: Int }
+                             , deviceIndex :: Int
+                             }
                -- generic device messages
              | StopDeviceCmd { id :: Int
-                             , deviceIndex :: Int }
+                             , deviceIndex :: Int
+                             }
+             | StopAllDevices { id :: Int }
+             -- TODO RawCmd ... how to handle byte array? Spec says it's a JSON array of ints 0-255
              | VibrateCmd { id :: Int
                           , deviceIndex :: Int
                           , speeds :: [ MotorVibrate ]
                           }
+             | LinearCmd { id :: Int
+                         , deviceIndex :: Int
+                         , vectors :: [ LinearActuate ]
+                         }
+             | RotateCmd { id :: Int
+                         , deviceIndex :: Int
+                         , rotations :: [ Rotate ]
+                         }
+             -- Specific device messages
+             | KiirooCmd { id :: Int
+                         , deviceIndex :: Int
+                         , command :: Text
+                         }
+             | FleshlightLaunchFW12Cmd
+                 { id :: Int
+                 , deviceIndex :: Int
+                 , position :: Int
+                 , speed :: Int
+                 }
+             | LovenseCmd
+                 { id :: Int
+                 , deviceIndex :: Int
+                 , command :: Text
+                 }
+             | VorzeA10CycloneCmd
+                 { id :: Int
+                 , deviceIndex :: Int
+                 , speed :: Int
+                 , clockwise :: Bool
+                 }
   deriving (Show, Eq, Generic)
 
 
