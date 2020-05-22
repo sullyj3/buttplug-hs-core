@@ -23,9 +23,9 @@ module Buttplug.Internal where
                 , vibrateOnlyMotor
                 )-} 
 
-import           Data.Foldable       (traverse_, for_)
-import           Control.Monad       (forever)
-import           Control.Concurrent (forkIO, ThreadId)
+import           Data.Foldable                ( traverse_, for_ )
+import           Control.Monad                ( forever )
+import           Control.Concurrent           ( forkIO, ThreadId )
 import           Control.Concurrent.Async
 import           Control.Concurrent.STM
 import           Control.Concurrent.STM.TVar
@@ -33,32 +33,32 @@ import           Control.Concurrent.STM.TChan
 import           Data.Void
 import           Control.Monad.Trans.Reader
 import           Control.Monad.IO.Class
-import           Data.Text.Encoding  (decodeUtf8)
-import           Network.Socket      (withSocketsDo)
+import           Data.Text.Encoding           ( decodeUtf8 )
+import           Network.Socket               ( withSocketsDo )
 import           GHC.Generics
-import           Data.Text           (Text)
-import qualified Data.Text           as T
-import qualified Data.Text.IO        as T
-import           Data.ByteString     (ByteString)
-import qualified Data.ByteString     as BS
-import qualified Data.Word           (Word8)
-import qualified Network.WebSockets  as WS
-import           Data.Aeson          ( ToJSON(..)
-                                     , FromJSON(..)
-                                     , genericToJSON
-                                     , Options(..)
-                                     , defaultOptions
-                                     , SumEncoding(..)
-                                     , genericParseJSON
-                                     , encode
-                                     , decode)
-import qualified Data.Map.Strict     as Map
-import           Data.Map.Strict     (Map)
-import           Data.ByteString.Lazy (fromStrict)
-import           UnliftIO.Exception  (throwString)
+import           Data.Text                    ( Text )
+import qualified Data.Text                    as T
+import qualified Data.Text.IO                 as T
+import           Data.ByteString              ( ByteString )
+import qualified Data.ByteString              as BS
+import qualified Data.Word                    ( Word8 )
+import qualified Network.WebSockets           as WS
+import           Data.Aeson                   ( ToJSON(..)
+                                              , FromJSON(..)
+                                              , genericToJSON
+                                              , Options(..)
+                                              , defaultOptions
+                                              , SumEncoding(..)
+                                              , genericParseJSON
+                                              , encode
+                                              , decode)
+import qualified Data.Map.Strict              as Map
+import           Data.Map.Strict              ( Map )
+import           Data.ByteString.Lazy         ( fromStrict )
+import           UnliftIO.Exception           ( throwString )
 
-import qualified Buttplug.Devices    as Dev
-import           Buttplug.Devices    (Device(..))
+import qualified Buttplug.Devices             as Dev
+import           Buttplug.Devices             ( Device(..) )
 import           Buttplug.Internal.JSONUtils
 
 data ErrorCode = ERROR_UNKNOWN
