@@ -36,8 +36,8 @@ dependencies:
 - containers
 - unordered-containers
 - unliftio
+- unliftio-core
 - websockets
-- relude
 
 library:
   source-dirs: src

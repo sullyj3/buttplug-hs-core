@@ -1,9 +1,8 @@
 {-# LANGUAGE BlockArguments #-}
-{-# LANGUAGE NoImplicitPrelude #-}
+-- {-# LANGUAGE NoImplicitPrelude #-}
 
 module Main where
 
-import           Relude
 
 import qualified Data.Text           as T
 import qualified Data.Text.IO        as T

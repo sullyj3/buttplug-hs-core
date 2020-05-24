@@ -25,14 +25,13 @@ module Buttplug.Internal where
 
 import           Data.Foldable                ( traverse_, for_ )
 import           Control.Monad                ( forever )
-import           Control.Concurrent           ( forkIO, ThreadId )
-import           Control.Concurrent.Async
-import           Control.Concurrent.STM
-import           Control.Concurrent.STM.TVar
-import           Control.Concurrent.STM.TChan
+import           UnliftIO.Concurrent           ( forkIO, ThreadId )
+import           UnliftIO.Async
+import           UnliftIO.STM
 import           Data.Void
 import           Control.Monad.Trans.Reader
 import           Control.Monad.IO.Class
+import           Control.Monad.IO.Unlift
 import           Data.Text.Encoding           ( decodeUtf8 )
 import           Network.Socket               ( withSocketsDo )
 import           GHC.Generics
@@ -294,19 +293,49 @@ receiveMsgs con = do
     Nothing -> throwString "Couldn't decode the message from the server"
 
 
-sendMessage :: (Int -> Message) -> ButtPlugM Message
-sendMessage msg = do
-  liftIO $ putStrLn "sendMessage called"
-  outGoing <- getOutgoingChan
-  responseChan <- liftIO $ atomically do
-    responseChan <- newTChan :: STM (TChan (Message))
-    writeTChan outGoing (msg, responseChan)
-    pure responseChan
+-- the message id is decided at the last second in handleOutGoing, so we take a function
+-- from messageid to message.
+-- we return the response from the server
+sendMessage :: (Int -> Message) -> ButtPlugM (Async Message)
+sendMessage msgNoId = do
 
-  liftIO $ atomically $ readTChan responseChan
+  liftIO $ putStrLn "sendMessage called"
+  msgId <- getNextMsgId
+
+  let msg = msgNoId msgId
+
+  outGoing <- getOutgoingChan
+  atomically $ writeTChan outGoing msg
+
+  waitForResponse msgId
+
+  where
+
+waitForResponse :: Int -> ButtPlugM (Async Message)
+waitForResponse msgId = do
+
+  awaitingResponseVar <- getAwaitingResponses
+
+  async do
+    tmvarResponse <- atomically do
+      awaitingResponseMap <- readTVar awaitingResponseVar
+      maybe retrySTM pure $ Map.lookup msgId awaitingResponseMap
+
+    atomically do
+      response <- takeTMVar tmvarResponse
+      modifyTVar awaitingResponseVar (Map.delete msgId)
+      pure response
+
+getNextMsgId :: ButtPlugM Int
+getNextMsgId = do
+  var <- clientNextMsgId <$> ask
+  atomically do
+    next <- readTVar var
+    modifyTVar var (+1)
+    pure next
 
 -- Should return a message containing the server info
-handshake :: ButtPlugM Message
+handshake :: ButtPlugM (Async Message)
 handshake = sendMessage \msgId ->
     RequestServerInfo { msgId = msgId 
                       -- TODO this should be passed in by the user
@@ -314,17 +343,15 @@ handshake = sendMessage \msgId ->
                       , msgMessageVersion = 1 
                       }
 
-startScanning :: ButtPlugM ()
-startScanning = do 
-  Ok n <- sendMessage \msgId -> StartScanning { msgId = msgId }
-  pure ()
+startScanning :: ButtPlugM (Async Message)
+startScanning = do
+  sendMessage \msgId -> StartScanning { msgId = msgId }
 
 handleIO :: ButtPlugM Void
 handleIO = do
   liftIO $ putStrLn "handleIO called"
   client <- ask
-  liftIO $ concurrently (runButtPlugM client $ handleIncoming (const $ pure ()))
-                        (runButtPlugM client handleOutGoing)
+  concurrently handleIncoming handleOutGoing
 
   forever $ pure ()
 
@@ -333,63 +360,55 @@ handleOutGoing = do
   liftIO $ putStrLn "handleOutGoing called"
   Client { clientCon = con
          , clientOutgoingQ = outGoing
-         , clientAwaitingResponse = awaitingResponse
-         , nextMsgId = nextMsgId } <- ask
+         , clientAwaitingResponse = awaitingResponse } <- ask
 
-  liftIO $ forever do
-    mMsg <- atomically $ tryReadTChan outGoing >>= \case
-      Just (outGoingMsg, responseChan) -> do
-        msgId <- readTVar nextMsgId
-        modifyTVar' nextMsgId (+1)
-        modifyTVar' awaitingResponse (Map.insert msgId responseChan)
-        pure $ Just $ outGoingMsg msgId
-      Nothing -> pure Nothing
 
-    case mMsg of
-      Just msg -> do
-        liftIO $ putStrLn $ "Sending: "
-        liftIO $ print msg
-        sendData (encode [msg]) con
-      Nothing -> pure ()
+  forever do
+    -- block until we have a message to send
+    msg <- atomically $ readTChan outGoing
+    atomically do
+      var <- newEmptyTMVar
+      modifyTVar' awaitingResponse $ Map.insert (msgId msg) var
+
+    liftIO do putStrLn $ "Sending: "
+              print msg
+              sendData (encode [msg]) con
 
   where
     sendData d = \case
       WebSocketConnection con -> WS.sendTextData con d
 
-handleIncoming :: (Message -> ButtPlugM ()) -> ButtPlugM Void
-handleIncoming newMsgHandler = do
+-- Recieve incoming messages from the connector. Any messages which are responses to
+-- messages sent earlier are stored for retrieval by the asyncs that expect them. 
+-- All others are broadcast on the clientIncomingQ to be handled by a provided handler
+handleIncoming :: ButtPlugM Void
+handleIncoming = do
   liftIO $ putStrLn "handleIncoming called"
   client@Client { clientCon = WebSocketConnection con
                 , clientOutgoingQ = outGoing
                 , clientAwaitingResponse = awaitingResponse
-                , nextMsgId = nextMsgId } <- ask
+                , clientIncomingQ = incoming } <- ask
 
-  liftIO $ forever do
-    putStrLn "a"
-    messages <- receiveMsgs con
-    putStrLn "b"
+  forever do
+    messages <- liftIO $ receiveMsgs con
     for_ messages \msg -> do
 
-      print msg
+      liftIO $ print msg
 
       -- if there is a thread awaiting this message as a response, send the
       -- response to the thread and ignore it. Otherwise, pass it to the 
       -- provided handler
       shouldHandle <- atomically do
         awaitingResponseMap <- readTVar awaitingResponse
-        case Map.lookup (msgId msg) awaitingResponseMap of
-          Just responseChan -> do
-            writeTChan responseChan msg
-            modifyTVar awaitingResponse (Map.delete $ msgId msg)
-            pure Nothing
-          Nothing -> pure $ Just msg
 
-      case shouldHandle of
-        Just msg -> liftIO do
-                      putStrLn "passing message to handler"
-                      forkIO $ runButtPlugM client (newMsgHandler msg)
-                      pure ()
-        Nothing -> putStrLn "passed reply to the thread that was expecting it"
+        case Map.lookup (msgId msg) awaitingResponseMap of
+          Just var -> putTMVar var msg >> pure False
+          Nothing -> pure True
+
+      if shouldHandle
+      then liftIO do putStrLn "passing message to handler"
+                     atomically $ writeTChan incoming msg
+      else liftIO $ putStrLn "passed reply to the thread that was expecting it"
 
 getOutgoingChan = clientOutgoingQ <$> ask
 
@@ -405,42 +424,41 @@ getConnection :: ButtPlugM ButtPlugConnection
 getConnection = clientCon <$> ask
 
 
-stopDevice :: Device -> ButtPlugM ()
+stopDevice :: Device -> ButtPlugM (Async Message)
 stopDevice dev@(Device {deviceName=dName, deviceIndex=dIdx})
   -- temporary hack until server handles StopDeviceCmd for youou correctly
   | "Youou" `T.isInfixOf` dName = stopYouou dev
   | otherwise = do
       let msg = \msgId -> StopDeviceCmd { msgId = msgId, msgDeviceIndex = dIdx }
-      Ok n <- sendMessage msg -- todo: proper exception handling
-      pure ()
+      sendMessage msg -- todo: proper exception handling
   where
-    stopYouou :: Device -> ButtPlugM ()
+    stopYouou :: Device -> ButtPlugM (Async Message)
     stopYouou dev = vibrateOnlyMotor dev $ 1/255
 
 
-vibrateOnlyMotor :: Device -> Double -> ButtPlugM ()
+vibrateOnlyMotor :: Device -> Double -> ButtPlugM (Async Message)
 vibrateOnlyMotor (Device {deviceIndex = dIdx}) speed = do
   let msg = \mid -> VibrateCmd { msgId = 1
                                , msgDeviceIndex = dIdx
                                , msgSpeeds = [MotorVibrate { index = 0
                                                            , speed = speed }]
                                }
-  Ok n <- sendMessage msg
-  pure ()
+  sendMessage msg
 
 
 -- Each time the client sends a message expecting a response, it registers that expectation in this map.
 -- We map the message id of the expected response to a channel to the thread waiting on that response.
 -- After notifying the thread of the arrival of the message, we remove the entry from the map.
-type AwaitingResponseMap = (Map Int (TChan Message))
+type AwaitingResponseMap = (Map Int (TMVar Message))
 
 getAwaitingResponses :: ButtPlugM (TVar AwaitingResponseMap)
 getAwaitingResponses = clientAwaitingResponse <$> ask
 
 data Client = Client { clientCon :: ButtPlugConnection
                      , clientAwaitingResponse :: TVar AwaitingResponseMap
-                     , nextMsgId :: TVar Int
-                     , clientOutgoingQ :: TChan (Int -> Message, TChan Message)
+                     , clientNextMsgId :: TVar Int
+                     , clientOutgoingQ :: TChan Message
+                     , clientIncomingQ :: TChan Message
                      }
 
 
@@ -470,6 +488,7 @@ newClient con = atomically $
          <*> newTVar mempty
          <*> newTVar 1
          <*> newTChan
+         <*> newTChan
 
 
 runButtPlugApp :: Connector
@@ -483,18 +502,18 @@ runButtPlugApp (WebSocketConnector host port) (ButtPlugApp handleDeviceAdded) =
 
     putStrLn "Connected to the Buttplug server."
 
-    withWorker (runButtPlugM client handleIO) $ runButtPlugM client do
+    runButtPlugM client $ withWorker handleIO $ do
       liftIO $ T.putStrLn "Press enter to exit"
-      handshake
+      aServerInfo <- handshake
       startScanning
       liftIO getLine
       close
 
 -- From https://mazzo.li/posts/threads-resources.html
-withWorker ::
-     IO Void -- ^ Worker to run
-  -> IO a
-  -> IO a
+withWorker :: MonadUnliftIO m
+           => m Void -- ^ Worker to run
+           -> m a
+           -> m a
 withWorker worker cont = either absurd Prelude.id <$> race worker cont
 
 

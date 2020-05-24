@@ -2,14 +2,15 @@ module Buttplug.Extra where
 
 import           Control.Concurrent (threadDelay)
 import           Control.Monad.IO.Class
+import           UnliftIO.Async
 
 import Buttplug
 import Buttplug.Devices
 
-vibePulseFullSpeed :: Device -> Double -> ButtPlugM ()
+vibePulseFullSpeed :: Device -> Double -> ButtPlugM (Async Message)
 vibePulseFullSpeed dev seconds = vibePulse dev seconds 1
 
-vibePulse :: Device -> Double -> Double -> ButtPlugM ()
+vibePulse :: Device -> Double -> Double -> ButtPlugM (Async Message)
 vibePulse dev seconds speed = do
   vibrateOnlyMotor dev speed <* sleep seconds
   stopDevice dev
