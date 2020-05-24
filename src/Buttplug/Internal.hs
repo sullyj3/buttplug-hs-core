@@ -354,12 +354,17 @@ handleIO (ButtPlugApp handleDeviceAdded) = do
   incoming <- clientIncomingQ <$> ask
 
   withWorker (concurrently0 handleIncoming handleOutGoing)
-             $ forever $ atomically (readTChan incoming) >>= \case
+             $ forever $ atomically (readTChan incoming) >>= handleNewMessages
+
+  where
+    handleNewMessages = \case
       DeviceAdded _ name idx msgs -> do
         handleDeviceAdded $ Device name idx msgs
       _ -> do
         liftIO $ putStrLn "Discarding unhandled message"
 
+-- concurrently do actions that loop infinitely unless terminated by exception,
+-- which will be re-thrown
 concurrently0 :: MonadUnliftIO m => m Void -> m Void -> m Void
 concurrently0 m n = fmap undefined $ concurrently m n
 
