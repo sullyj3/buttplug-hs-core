@@ -1,6 +1,6 @@
 module Buttplug.Extra where
 
-import           Control.Concurrent (threadDelay)
+import           UnliftIO.Concurrent (threadDelay)
 import           Control.Monad.IO.Class
 import           UnliftIO.Async
 
@@ -16,4 +16,4 @@ vibePulse dev seconds speed = do
   stopDevice dev
 
 sleep :: MonadIO m => Double -> m ()
-sleep seconds = liftIO $ threadDelay $ round $ 1000000 * seconds
+sleep seconds = threadDelay $ round $ 1000000 * seconds
