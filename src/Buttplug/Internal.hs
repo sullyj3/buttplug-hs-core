@@ -340,20 +340,29 @@ handshake = sendMessage \msgId ->
     RequestServerInfo { msgId = msgId 
                       -- TODO this should be passed in by the user
                       , msgClientName = "Buttplug-hs"
-                      , msgMessageVersion = 1 
+                      , msgMessageVersion = 1
                       }
 
 startScanning :: ButtPlugM (Async Message)
 startScanning = do
   sendMessage \msgId -> StartScanning { msgId = msgId }
 
-handleIO :: ButtPlugM Void
-handleIO = do
+handleIO :: ButtPlugApp -> ButtPlugM Void
+handleIO (ButtPlugApp handleDeviceAdded) = do
   liftIO $ putStrLn "handleIO called"
-  client <- ask
-  concurrently handleIncoming handleOutGoing
 
-  forever $ pure ()
+  incoming <- clientIncomingQ <$> ask
+
+  withWorker (concurrently0 handleIncoming handleOutGoing)
+             $ forever $ atomically (readTChan incoming) >>= \case
+      DeviceAdded _ name idx msgs -> do
+        handleDeviceAdded $ Device name idx msgs
+      _ -> do
+        liftIO $ putStrLn "Discarding unhandled message"
+
+concurrently0 :: MonadUnliftIO m => m Void -> m Void -> m Void
+concurrently0 m n = fmap undefined $ concurrently m n
+
 
 handleOutGoing :: ButtPlugM Void
 handleOutGoing = do
@@ -494,15 +503,14 @@ newClient con = atomically $
 runButtPlugApp :: Connector
                -> ButtPlugApp
                -> IO ()
-runButtPlugApp (WebSocketConnector host port) (ButtPlugApp handleDeviceAdded) = 
+runButtPlugApp (WebSocketConnector host port) app = 
   withSocketsDo $ WS.runClient host port "/" \wsCon -> do
     let con = WebSocketConnection wsCon
-    
     client <- newClient con
 
     putStrLn "Connected to the Buttplug server."
 
-    runButtPlugM client $ withWorker handleIO $ do
+    runButtPlugM client $ withWorker (handleIO app) do
       liftIO $ T.putStrLn "Press enter to exit"
       aServerInfo <- handshake
       startScanning
@@ -514,7 +522,7 @@ withWorker :: MonadUnliftIO m
            => m Void -- ^ Worker to run
            -> m a
            -> m a
-withWorker worker cont = either absurd Prelude.id <$> race worker cont
+withWorker worker cont = either absurd id <$> race worker cont
 
 
 -- messages that we may expect as a response to other messages

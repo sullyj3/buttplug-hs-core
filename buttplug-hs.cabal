@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: da5354e52d2ea102146294c35e280900226e1a78f5207f727182ec62cfa15c4d
+-- hash: a78d055fefcf3923f9a9ea3276aee8741bb3b3e3839f66c53d6af36d4787925b
 
 name:           buttplug-hs
 version:        0.1.0.0
@@ -59,7 +59,6 @@ library
 executable buttplug-hs-exe
   main-is: Main.hs
   other-modules:
-      AsyncExper
       Paths_buttplug_hs
   hs-source-dirs:
       app
