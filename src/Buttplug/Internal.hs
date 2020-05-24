@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE DeriveGeneric #-}
@@ -25,6 +26,7 @@ module Buttplug.Internal where
 
 import           Data.Foldable                ( traverse_, for_ )
 import           Control.Monad                ( forever )
+import           Control.Exception
 import           UnliftIO.Concurrent           ( forkIO, ThreadId )
 import           UnliftIO.Async
 import           UnliftIO.STM
@@ -304,15 +306,18 @@ sendMessage msgNoId = do
 
   let msg = msgNoId msgId
 
+  liftIO $ putStrLn $ "in sendMessage, msg is:\n" <> show msg
+
+
   outGoing <- getOutgoingChan
   atomically $ writeTChan outGoing msg
 
-  waitForResponse msgId
+  getResponse msgId
 
   where
 
-waitForResponse :: Int -> ButtPlugM (Async Message)
-waitForResponse msgId = do
+getResponse :: Int -> ButtPlugM (Async Message)
+getResponse msgId = do
 
   awaitingResponseVar <- getAwaitingResponses
 
@@ -347,21 +352,20 @@ startScanning :: ButtPlugM (Async Message)
 startScanning = do
   sendMessage \msgId -> StartScanning { msgId = msgId }
 
+
 handleIO :: ButtPlugApp -> ButtPlugM Void
 handleIO (ButtPlugApp handleDeviceAdded) = do
   liftIO $ putStrLn "handleIO called"
-
   incoming <- clientIncomingQ <$> ask
-
   withWorker (concurrently0 handleIncoming handleOutGoing)
              $ forever $ atomically (readTChan incoming) >>= handleNewMessages
-
   where
     handleNewMessages = \case
       DeviceAdded _ name idx msgs -> do
         handleDeviceAdded $ Device name idx msgs
       _ -> do
         liftIO $ putStrLn "Discarding unhandled message"
+
 
 -- concurrently do actions that loop infinitely unless terminated by exception,
 -- which will be re-thrown
@@ -376,10 +380,11 @@ handleOutGoing = do
          , clientOutgoingQ = outGoing
          , clientAwaitingResponse = awaitingResponse } <- ask
 
-
   forever do
     -- block until we have a message to send
     msg <- atomically $ readTChan outGoing
+    -- record that we expect a response with the same message id
+    -- the response will be placed in the created TMvar
     atomically do
       var <- newEmptyTMVar
       modifyTVar' awaitingResponse $ Map.insert (msgId msg) var
@@ -392,9 +397,10 @@ handleOutGoing = do
     sendData d = \case
       WebSocketConnection con -> WS.sendTextData con d
 
+
 -- Recieve incoming messages from the connector. Any messages which are responses to
--- messages sent earlier are stored for retrieval by the asyncs that expect them. 
--- All others are broadcast on the clientIncomingQ to be handled by a provided handler
+-- messages sent earlier are stored for retrieval by the asyncs that expect them.
+-- All others are sent on the clientIncomingQ to be handled in handleIO
 handleIncoming :: ButtPlugM Void
 handleIncoming = do
   liftIO $ putStrLn "handleIncoming called"
@@ -407,11 +413,14 @@ handleIncoming = do
     messages <- liftIO $ receiveMsgs con
     for_ messages \msg -> do
 
+      liftIO $ putStrLn "received message:"
       liftIO $ print msg
 
-      -- if there is a thread awaiting this message as a response, send the
-      -- response to the thread and ignore it. Otherwise, pass it to the 
-      -- provided handler
+      -- If the message is a response to a message we sent, send the
+      -- response to the thread that sent it.
+      -- Otherwise, pass it on to be handled.
+      --
+      -- todo: this is gross, not sure how to refactor
       shouldHandle <- atomically do
         awaitingResponseMap <- readTVar awaitingResponse
 
@@ -424,9 +433,6 @@ handleIncoming = do
                      atomically $ writeTChan incoming msg
       else liftIO $ putStrLn "passed reply to the thread that was expecting it"
 
-getOutgoingChan = clientOutgoingQ <$> ask
-
-
 
 close :: ButtPlugM ()
 close = do
@@ -438,26 +444,52 @@ getConnection :: ButtPlugM ButtPlugConnection
 getConnection = clientCon <$> ask
 
 
-stopDevice :: Device -> ButtPlugM (Async Message)
+getOutgoingChan :: ButtPlugM (TChan Message)
+getOutgoingChan = clientOutgoingQ <$> ask
+
+
+data ServerError = ServerError { errorMessage :: Text
+                               , errorCode :: ErrorCode 
+                               }
+                               deriving (Show)
+
+instance Exception ServerError
+
+expectOK :: Async Message -> ButtPlugM ()
+expectOK aMsg = wait aMsg >>= \case
+  Ok _ -> pure ()
+  err@(Error _ msg code) -> liftIO do
+    putStrLn "Error from the server:"
+    print err
+    throwIO $ ServerError msg code
+  msg -> liftIO do
+    putStrLn "Got an unexpected response! This is a bug"
+    print msg
+
+
+stopDevice :: Device -> ButtPlugM ()
 stopDevice dev@(Device {deviceName=dName, deviceIndex=dIdx})
   -- temporary hack until server handles StopDeviceCmd for youou correctly
-  | "Youou" `T.isInfixOf` dName = stopYouou dev
-  | otherwise = do
-      let msg = \msgId -> StopDeviceCmd { msgId = msgId, msgDeviceIndex = dIdx }
-      sendMessage msg -- todo: proper exception handling
+  | "Youou" `T.isInfixOf` dName = stopYouou   dev
+  | otherwise                   = stopRegular dev
   where
-    stopYouou :: Device -> ButtPlugM (Async Message)
+    stopYouou :: Device -> ButtPlugM ()
     stopYouou dev = vibrateOnlyMotor dev $ 1/255
 
+    stopRegular :: Device -> ButtPlugM ()
+    stopRegular dev =
+      sendMessage (\msgId -> StopDeviceCmd { msgId = msgId, msgDeviceIndex = dIdx })
+      >>= expectOK
 
-vibrateOnlyMotor :: Device -> Double -> ButtPlugM (Async Message)
+
+vibrateOnlyMotor :: Device -> Double -> ButtPlugM ()
 vibrateOnlyMotor (Device {deviceIndex = dIdx}) speed = do
-  let msg = \mid -> VibrateCmd { msgId = 1
-                               , msgDeviceIndex = dIdx
-                               , msgSpeeds = [MotorVibrate { index = 0
-                                                           , speed = speed }]
-                               }
-  sendMessage msg
+  let msg = \msgId -> VibrateCmd { msgId = msgId
+                                 , msgDeviceIndex = dIdx
+                                 , msgSpeeds = [MotorVibrate { index = 0
+                                                             , speed = speed }]
+                                 }
+  sendMessage msg >>= expectOK
 
 
 -- Each time the client sends a message expecting a response, it registers that expectation in this map.
