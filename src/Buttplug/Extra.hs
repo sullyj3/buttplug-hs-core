@@ -12,7 +12,7 @@ vibePulseFullSpeed dev seconds = vibePulse dev seconds 1
 
 vibePulse :: Device -> Double -> Double -> ButtPlugM ()
 vibePulse dev seconds speed = do
-  vibrateOnlyMotor dev speed <* sleep seconds
+  vibrateAllMotors dev speed <* sleep seconds
   stopDevice dev
 
 sleep :: MonadIO m => Double -> m ()

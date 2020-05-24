@@ -474,7 +474,7 @@ stopDevice dev@(Device {deviceName=dName, deviceIndex=dIdx})
   | otherwise                   = stopRegular dev
   where
     stopYouou :: Device -> ButtPlugM ()
-    stopYouou dev = vibrateOnlyMotor dev $ 1/255
+    stopYouou dev = vibrateAllMotors dev $ 1/255
 
     stopRegular :: Device -> ButtPlugM ()
     stopRegular dev =
@@ -482,14 +482,18 @@ stopDevice dev@(Device {deviceName=dName, deviceIndex=dIdx})
       >>= expectOK
 
 
-vibrateOnlyMotor :: Device -> Double -> ButtPlugM ()
-vibrateOnlyMotor (Device {deviceIndex = dIdx}) speed = do
-  let msg = \msgId -> VibrateCmd { msgId = msgId
-                                 , msgDeviceIndex = dIdx
-                                 , msgSpeeds = [MotorVibrate { index = 0
-                                                             , speed = speed }]
-                                 }
-  sendMessage msg >>= expectOK
+vibrateAllMotors :: Device -> Double -> ButtPlugM ()
+vibrateAllMotors dev speed =
+
+  case Map.lookup Dev.VibrateCmd (deviceMessages dev) of
+    Just (Dev.MessageAttributes (Just featureCount)) -> do
+      let msg = \msgId -> 
+            VibrateCmd { msgId = msgId
+                       , msgDeviceIndex = deviceIndex dev
+                       , msgSpeeds = [MotorVibrate idx speed | idx <- [0..featureCount-1]]
+                       }
+      sendMessage msg >>= expectOK
+    _ -> throwString "This device can't vibrate!"
 
 
 -- Each time the client sends a message expecting a response, it registers that expectation in this map.
