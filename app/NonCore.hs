@@ -59,8 +59,8 @@ runButtPlugM client bpm = runReaderT bpm client
 
 newClient :: ButtPlugConnection -> IO Client
 newClient con = atomically $
-  Client <$> pure con
-         <*> newTVar mempty
+  Client     con
+         <$> newTVar mempty
          <*> newTVar 1
          <*> newTChan
          <*> newTChan
