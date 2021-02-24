@@ -152,7 +152,7 @@ handshake = sendMessage \msgId ->
     RequestServerInfo { msgId = msgId 
                       -- TODO this should be passed in by the user
                       , msgClientName = "Buttplug-hs"
-                      , msgMessageVersion = 1
+                      , msgMessageVersion = clientMessageVersion
                       }
 
 startScanning :: ButtPlugM (Async Message)

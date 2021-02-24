@@ -27,7 +27,7 @@ import           Data.Text                    ( Text )
 import qualified Data.Text                    as T
 import           Data.ByteString              ( ByteString )
 import qualified Data.ByteString              as BS
-import qualified Data.Word                    ( Word8 )
+import           Data.Word                    ( Word8 )
 import qualified Network.WebSockets           as WS
 import           Data.Aeson                   ( ToJSON(..)
                                               , FromJSON(..)
@@ -79,7 +79,7 @@ instance FromJSON ErrorCode where
 
 ------------------------------------------------
 clientMessageVersion :: Int
-clientMessageVersion = 1
+clientMessageVersion = 2
 
 stripPrefix :: String -> String -> String
 stripPrefix s = drop $ length s
@@ -165,6 +165,8 @@ instance FromJSON LogLevel where
     defaultOptions { constructorTagModifier = stripPrefix "LogLevel" }
 
 
+-- TODO: Technically some of these should be unsigned - Word rather than Int
+-- deal with it if it comes up
 ------------------------------------------------
 data Message = 
                -- handshake messages
@@ -174,9 +176,6 @@ data Message =
                                  }
              | ServerInfo { msgId :: Int
                           , msgServerName :: Text
-                          , msgMajorVersion :: Int
-                          , msgMinorVersion :: Int
-                          , msgBuildVersion :: Int
                           , msgMessageVersion :: Int
                           , msgMaxPingTime :: Int
                           }
@@ -187,14 +186,6 @@ data Message =
                      , msgErrorCode :: ErrorCode
                      }
              | Ping { msgId :: Int }
-             | Test { msgId :: Int
-                    , msgTestString :: Text }
-             | RequestLog { msgId :: Int
-                          , msgLogLevel :: LogLevel }
-             | Log { msgId :: Int
-                   , msgLogLevel :: LogLevel
-                   , msgLogMessage :: Text
-                   }
                -- enumeration messages
              | StartScanning { msgId :: Int }
              | StopScanning { msgId :: Int }
@@ -211,12 +202,32 @@ data Message =
              | DeviceRemoved { msgId :: Int
                              , msgDeviceIndex :: Int
                              }
+               -- raw device messages
+             | RawWriteCmd { msgId :: Int
+                           , msgDeviceIndex :: Int
+                           , msgEndpoint :: Text
+                           , msgData :: [Word8]
+                           , msgWriteWithResponse :: Bool }
+             | RawReadCmd { msgId :: Int
+                          , msgDeviceIndex :: Int
+                          , msgEndpoint :: Text
+                          , msgExpectedLength :: Int
+                          , msgWaitForData :: Bool }
+             | RawReading { msgId :: Int
+                          , msgDeviceIndex :: Int
+                          , msgEndpoint :: Text
+                          , msgData :: [Word8] }
+             | RawSubscribeCmd { msgId :: Int
+                               , msgDeviceIndex :: Int
+                               , msgEndpoint :: Text }
+             | RawUnsubscribeCmd { msgId :: Int
+                                 , msgDeviceIndex :: Int
+                                 , msgEndpoint :: Text }
                -- generic device messages
              | StopDeviceCmd { msgId :: Int
                              , msgDeviceIndex :: Int
                              }
              | StopAllDevices { msgId :: Int }
-             -- TODO RawCmd ... how to handle byte array? Spec says it's a JSON array of ints 0-255
              | VibrateCmd { msgId :: Int
                           , msgDeviceIndex :: Int
                           , msgSpeeds :: [ MotorVibrate ]
@@ -229,28 +240,21 @@ data Message =
                          , msgDeviceIndex :: Int
                          , msgRotations :: [ Rotate ]
                          }
-             -- Specific device messages
-             | KiirooCmd { msgId :: Int
-                         , msgDeviceIndex :: Int
-                         , msgCommand :: Text
-                         }
-             | FleshlightLaunchFW12Cmd
-                 { msgId :: Int
-                 , msgDeviceIndex :: Int
-                 , msgPosition :: Int
-                 , msgSpeed :: Int
-                 }
-             | LovenseCmd
-                 { msgId :: Int
-                 , msgDeviceIndex :: Int
-                 , msgCommand :: Text
-                 }
-             | VorzeA10CycloneCmd
-                 { msgId :: Int
-                 , msgDeviceIndex :: Int
-                 , msgSpeed :: Int
-                 , msgClockwise :: Bool
-                 }
+               -- generic sensor messages
+             | BatteryLevelCmd { msgId :: Int
+                               , msgDeviceIndex :: Int
+                               }
+             | BatteryLevelReading { msgId :: Int
+                               , msgDeviceIndex :: Int
+                               , msgBatteryLevel :: Double
+                               }
+             | RSSILevelCmd { msgId :: Int
+                            , msgDeviceIndex :: Int
+                            }
+             | RSSILevelReading { msgId :: Int
+                                , msgDeviceIndex :: Int
+                                , msgRSSILevel :: Int
+                                }
   deriving (Show, Eq, Generic)
 
 
@@ -290,11 +294,6 @@ isOk  :: Message -> Bool
 isOk = \case
   (Ok {}) -> True
   _       -> False
-
-isTest :: Message -> Bool
-isTest = \case
-  (Test {}) -> True
-  _         -> False
 
 isScanningFinished :: Message -> Bool
 isScanningFinished = \case
