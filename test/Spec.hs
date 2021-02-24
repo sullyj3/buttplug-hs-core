@@ -17,6 +17,7 @@ import           Data.Aeson ( decode
 import           Data.Maybe (isJust)
 import           Data.ByteString     (ByteString)
 import qualified Data.ByteString     as BS
+import           Data.Word                    ( Word8 )
 
 import           Buttplug.Internal
 import           Buttplug.Devices
@@ -34,6 +35,15 @@ testButtplug = do
     it "Can decode a simple list of messages with a nonempty device list" $
       (decode non_empty_device_list :: Maybe [Message]) `shouldBe` Just expectedNonemptyDeviceFields
 
+    -- should validate deserializing [Word8] more generally
+    it "Can decode a [Word8]" $ do
+      (decode "[0x0, 0x1, 0x0]" :: Maybe [Word8]) `shouldBe` Just [0,1,0]
+
+    it "Can decode a RawReading" $ do
+      let readingStr = "[ { \"RawReading\": { \"Id\": 1, \"DeviceIndex\": 0, \"Endpoint\": \"rx\", \"Data\": [0x0, 0x1, 0x0] } } ]"
+          expectedReading = [RawReading 1 0 "rx" [0,1,0]]
+      (decode readingStr :: Maybe [Message]) `shouldBe` Just expectedReading
+      
 
 -- [{"ServerInfo":{"MajorVersion":0,"MinorVersion":5,"BuildVersion":5,"MessageVersion":1,"MaxPingTime":0,"ServerName":"Intiface Server","Id":1}},{"DeviceList":{"Devices":[{"DeviceName":"Youou Wand Vibrator","DeviceIndex":1,"DeviceMessages":{"SingleMotorVibrateCmd":{},"VibrateCmd":{"FeatureCount":1},"StopDeviceCmd":{}}}],"Id":1}},{"Ok":{"Id":1}}]
 
