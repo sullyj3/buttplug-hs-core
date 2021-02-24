@@ -85,16 +85,17 @@ stripPrefix :: String -> String -> String
 stripPrefix s = drop $ length s
 
 ------------------------------------------------
-newtype RawCommand = RawCommand ByteString
-  deriving (Generic, Show, Eq)
-
-
-instance ToJSON RawCommand where
-  toJSON (RawCommand bs) = toJSON $ BS.unpack bs
-
-
-instance FromJSON RawCommand where
-  parseJSON j = RawCommand . BS.pack <$> parseJSON j
+-- What the heck was this for again?
+--newtype RawCommand = RawCommand ByteString
+--  deriving (Generic, Show, Eq)
+--
+--
+--instance ToJSON RawCommand where
+--  toJSON (RawCommand bs) = toJSON $ BS.unpack bs
+--
+--
+--instance FromJSON RawCommand where
+--  parseJSON j = RawCommand . BS.pack <$> parseJSON j
 
 
 ------------------------------------------------
@@ -144,25 +145,6 @@ instance ToJSON LinearActuate where
 instance FromJSON LinearActuate where
   parseJSON = genericParseJSON pascalCaseOptions { fieldLabelModifier = stripPrefix "linAct" }
 
-
-------------------------------------------------
-data LogLevel = LogLevelOff
-              | LogLevelFatal
-              | LogLevelError
-              | LogLevelWarn
-              | LogLevelInfo
-              | LogLevelDebug
-              | LogLevelTrace
-  deriving (Generic, Show, Eq)
-
-
-instance ToJSON LogLevel where
-  toJSON = genericToJSON $ defaultOptions { constructorTagModifier = stripPrefix "LogLevel" }
-
-
-instance FromJSON LogLevel where
-  parseJSON = genericParseJSON $ 
-    defaultOptions { constructorTagModifier = stripPrefix "LogLevel" }
 
 
 -- TODO: Technically some of these should be unsigned - Word rather than Int
