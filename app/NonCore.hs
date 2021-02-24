@@ -79,6 +79,8 @@ runButtPlugApp (WebSocketConnector host port) app =
     runButtPlugM client $ withWorker (handleIO app) do
       liftIO $ T.putStrLn "Press enter to exit"
       aServerInfo <- handshake
+      -- TODO currently we don't wait for a successful handshake before 
+      -- blundering ahead
       startScanning
       liftIO getLine
       close
