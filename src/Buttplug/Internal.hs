@@ -84,21 +84,10 @@ clientMessageVersion = 2
 stripPrefix :: String -> String -> String
 stripPrefix s = drop $ length s
 
-------------------------------------------------
--- What the heck was this for again?
---newtype RawCommand = RawCommand ByteString
---  deriving (Generic, Show, Eq)
---
---
---instance ToJSON RawCommand where
---  toJSON (RawCommand bs) = toJSON $ BS.unpack bs
---
---
---instance FromJSON RawCommand where
---  parseJSON j = RawCommand . BS.pack <$> parseJSON j
 
 
 ------------------------------------------------
+-- Used in VibrateCmd to specify the speed of the motor at the given index
 data MotorVibrate = MotorVibrate { index :: Int
                                  , speed :: Double
                                  }
