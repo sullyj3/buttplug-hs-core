@@ -90,9 +90,8 @@ withWorker :: MonadUnliftIO m
            -> m a
 withWorker worker cont = either absurd id <$> race worker cont
 
--- todo: refactor to be ButtPlugConnection -> IO [Message]
-receiveMsgs :: WS.Connection -> IO [Message]
-receiveMsgs con = do
+receiveMsgs :: ButtPlugConnection -> IO [Message]
+receiveMsgs (WebSocketConnection con) = do
   received <- WS.receiveData con
   --T.putStrLn $ "Server sent: " <> decodeUtf8 received
   case decode $ fromStrict received :: Maybe [Message] of
@@ -209,7 +208,7 @@ handleOutGoing = do
 handleIncoming :: ButtPlugM Void
 handleIncoming = do
   liftIO $ putStrLn "handleIncoming called"
-  client@Client { clientCon = WebSocketConnection con
+  client@Client { clientCon = con
                 , clientOutgoingQ = outGoing
                 , clientAwaitingResponse = awaitingResponse
                 , clientIncomingQ = incoming } <- ask
