@@ -35,13 +35,13 @@ testButtplug = do
     it "Can decode a simple list of messages with a nonempty device list" $
       (decode non_empty_device_list :: Maybe [Message]) `shouldBe` Just expectedNonemptyDeviceFields
 
-    -- should validate deserializing [Word8] more generally
-    it "Can decode a [Word8]" $ do
-      (decode "[0x0, 0x1, 0x0]" :: Maybe [Word8]) `shouldBe` Just [0,1,0]
+    -- should the string instead be "[0, 1, 0]"? Waiting for a reply on discord
+    it "Can decode a ByteString" $ do
+      (decode "[0, 1, 0]" :: Maybe RawData) `shouldBe` Just (RawData $ BS.pack [0,1,0])
 
     it "Can decode a RawReading" $ do
-      let readingStr = "[ { \"RawReading\": { \"Id\": 1, \"DeviceIndex\": 0, \"Endpoint\": \"rx\", \"Data\": [0x0, 0x1, 0x0] } } ]"
-          expectedReading = [RawReading 1 0 "rx" [0,1,0]]
+      let readingStr = "[ { \"RawReading\": { \"Id\": 1, \"DeviceIndex\": 0, \"Endpoint\": \"rx\", \"Data\": [0, 1, 0] } } ]"
+          expectedReading = [RawReading 1 0 "rx" (RawData $ BS.pack [0,1,0])]
       (decode readingStr :: Maybe [Message]) `shouldBe` Just expectedReading
       
 

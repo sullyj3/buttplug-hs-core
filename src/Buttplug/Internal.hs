@@ -85,6 +85,19 @@ stripPrefix :: String -> String -> String
 stripPrefix s = drop $ length s
 
 
+------------------------------------------------
+-- used for the various Raw* commands. Circumvents the fact that Aeson doesn't 
+-- have bytestring encoding/decoding in genericToJSON and genericParseJSON
+newtype RawData = RawData ByteString
+  deriving (Generic, Show, Eq)
+
+
+instance ToJSON RawData where
+  toJSON (RawData bs) = toJSON $ BS.unpack bs
+
+
+instance FromJSON RawData where
+  parseJSON j = RawData . BS.pack <$> parseJSON j
 
 ------------------------------------------------
 -- Used in VibrateCmd to specify the speed of the motor at the given index
@@ -177,7 +190,7 @@ data Message =
              | RawWriteCmd { msgId :: Int
                            , msgDeviceIndex :: Int
                            , msgEndpoint :: Text
-                           , msgData :: [Word8]
+                           , msgData :: RawData
                            , msgWriteWithResponse :: Bool }
              | RawReadCmd { msgId :: Int
                           , msgDeviceIndex :: Int
@@ -187,7 +200,7 @@ data Message =
              | RawReading { msgId :: Int
                           , msgDeviceIndex :: Int
                           , msgEndpoint :: Text
-                          , msgData :: [Word8] }
+                          , msgData :: RawData }
              | RawSubscribeCmd { msgId :: Int
                                , msgDeviceIndex :: Int
                                , msgEndpoint :: Text }
