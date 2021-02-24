@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a78d055fefcf3923f9a9ea3276aee8741bb3b3e3839f66c53d6af36d4787925b
+-- hash: ff7449471ffa9cb3639283bbd8e20acc41b3b2c11cc5febe8f7a663be7e3d777
 
 name:           buttplug-hs
 version:        0.1.0.0
@@ -29,7 +29,6 @@ library
   exposed-modules:
       Buttplug
       Buttplug.Devices
-      Buttplug.Extra
       Buttplug.Internal
       Buttplug.Internal.JSONUtils
   other-modules:
@@ -59,6 +58,8 @@ library
 executable buttplug-hs-exe
   main-is: Main.hs
   other-modules:
+      Extra
+      NonCore
       Paths_buttplug_hs
   hs-source-dirs:
       app

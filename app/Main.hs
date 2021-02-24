@@ -18,7 +18,8 @@ import           Buttplug.Devices    (Device(..))
 
 import qualified Buttplug            as Butt
 import           Buttplug
-import           Buttplug.Extra
+import           Extra
+import           NonCore
 
 app :: ButtPlugApp
 app = ButtPlugApp { handleDeviceAdded = handleDeviceAdded }
@@ -99,4 +100,4 @@ lerp a b t = a + t * (b - a)
 
 --------------------------------------------------------------------------------
 main :: IO ()
-main = Butt.runButtPlugApp (Butt.WebSocketConnector "localhost" 12345) app
+main = runButtPlugApp (Butt.WebSocketConnector "localhost" 12345) app

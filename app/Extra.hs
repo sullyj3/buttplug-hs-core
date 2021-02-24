@@ -1,8 +1,9 @@
-module Buttplug.Extra where
+module Extra where
 
 import           UnliftIO.Concurrent (threadDelay)
 import           Control.Monad.IO.Class
 import           UnliftIO.Async
+import           NonCore
 
 import Buttplug
 import Buttplug.Devices
