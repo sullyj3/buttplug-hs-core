@@ -144,6 +144,7 @@ getNextMsgId = do
     pure next
 
 -- Should return a message containing the server info
+-- TODO: probbly this should block
 handshake :: ButtPlugM (Async Message)
 handshake = sendMessage \msgId ->
     RequestServerInfo { msgId = msgId 
