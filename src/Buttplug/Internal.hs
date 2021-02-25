@@ -27,15 +27,19 @@ import           Data.Text                    ( Text )
 import qualified Data.Text                    as T
 import           Data.ByteString              ( ByteString )
 import qualified Data.ByteString              as BS
+import           Data.ByteString.Lazy         ( fromStrict )
 import           Data.Word                    ( Word8 )
 import qualified Network.WebSockets           as WS
+import           Network.Socket               ( withSocketsDo )
 import           Data.Aeson                   ( ToJSON(..)
                                               , FromJSON(..)
                                               , genericToJSON
                                               , Options(..)
                                               , defaultOptions
                                               , SumEncoding(..)
-                                              , genericParseJSON )
+                                              , genericParseJSON 
+                                              , encode
+                                              , decode )
 import qualified Data.Map.Strict              as Map
 import           Data.Map.Strict              ( Map )
 
@@ -265,7 +269,7 @@ data ButtPlugConnection = WebSocketConnection { con  :: WS.Connection
 
 
 data Connector = WebSocketConnector { wsConnectorHost :: String
-                                    , wsConnectorPort :: Int 
+                                    , wsConnectorPort :: Int
                                     }
 
 -- messages that we may expect as a response to other messages
@@ -290,3 +294,29 @@ isDeviceList = \case
   _              -> False
 
 
+-----------
+-- IO
+-----------
+runClient :: Connector -> (ButtPlugConnection -> IO a) -> IO a
+runClient connector client = case connector of
+  (WebSocketConnector host port) ->
+    withSocketsDo $ WS.runClient host port "/" \wsCon ->
+      client (WebSocketConnection wsCon)
+
+sendMessage :: ButtPlugConnection -> Message -> IO ()
+sendMessage con msg = sendMessages con [msg]
+
+-- the protocol allows sending multiple messages simultaneously, wrapped in a JSON array
+sendMessages :: ButtPlugConnection -> [Message] -> IO ()
+sendMessages con msgs = case con of
+  -- TODO: should look into giving messages a WebSocketsData instance
+  WebSocketConnection wsCon -> WS.sendTextData wsCon encoded
+  where encoded = encode msgs
+
+-- TODO: think about the best way to handle errors
+receiveMsgs :: ButtPlugConnection -> IO [Message]
+receiveMsgs (WebSocketConnection con) = do
+  received <- WS.receiveData con
+  case decode $ fromStrict received :: Maybe [Message] of
+    Just msgs -> pure msgs
+    Nothing -> error "Couldn't decode the message from the server"

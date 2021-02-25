@@ -24,7 +24,6 @@ import qualified Data.Text.IO                 as T
 import           Network.Socket               ( withSocketsDo )
 import           Data.Aeson                   ( decode
                                               , encode )
-import           Data.ByteString.Lazy         ( fromStrict )
 import           UnliftIO.Exception           ( throwString )
 import           Control.Monad                ( forever )
 import           Data.Foldable                ( traverse_, for_ )
@@ -92,27 +91,19 @@ withWorker :: MonadUnliftIO m
            -> m a
 withWorker worker cont = either absurd id <$> race worker cont
 
-receiveMsgs :: ButtPlugConnection -> IO [Message]
-receiveMsgs (WebSocketConnection con) = do
-  received <- WS.receiveData con
-  --T.putStrLn $ "Server sent: " <> decodeUtf8 received
-  case decode $ fromStrict received :: Maybe [Message] of
-    Just msgs -> pure msgs
-    Nothing -> throwString "Couldn't decode the message from the server"
-
 
 -- the message id is decided at the last second in handleOutGoing, so we take a function
 -- from messageid to message.
 -- we return the response from the server
-sendMessage :: (Int -> Message) -> ButtPlugM (Async Message)
-sendMessage msgNoId = do
+bpmSendMessage :: (Int -> Message) -> ButtPlugM (Async Message)
+bpmSendMessage msgNoId = do
 
-  liftIO $ putStrLn "sendMessage called"
+  liftIO $ putStrLn "bpmSendMessage called"
   msgId <- getNextMsgId
 
   let msg = msgNoId msgId
 
-  liftIO $ putStrLn $ "in sendMessage, msg is:\n" <> show msg
+  liftIO $ putStrLn $ "in bpmSendMessage, msg is:\n" <> show msg
 
 
   outGoing <- getOutgoingChan
@@ -148,7 +139,7 @@ getNextMsgId = do
 -- Should return a message containing the server info
 -- TODO: probbly this should block
 handshake :: ButtPlugM (Async Message)
-handshake = sendMessage \msgId ->
+handshake = bpmSendMessage \msgId ->
     RequestServerInfo { msgId = msgId 
                       -- TODO this should be passed in by the user
                       , msgClientName = "Buttplug-hs"
@@ -157,7 +148,7 @@ handshake = sendMessage \msgId ->
 
 startScanning :: ButtPlugM (Async Message)
 startScanning = do
-  sendMessage \msgId -> StartScanning { msgId = msgId }
+  bpmSendMessage \msgId -> StartScanning { msgId = msgId }
 
 
 handleIO :: ButtPlugApp -> ButtPlugM Void
@@ -285,7 +276,7 @@ stopDevice dev@(Device {deviceName=dName, deviceIndex=dIdx})
 
     stopRegular :: Device -> ButtPlugM ()
     stopRegular dev =
-      sendMessage (\msgId -> StopDeviceCmd { msgId = msgId, msgDeviceIndex = dIdx })
+      bpmSendMessage (\msgId -> StopDeviceCmd { msgId = msgId, msgDeviceIndex = dIdx })
       >>= expectOK
 
 
@@ -299,5 +290,5 @@ vibrateAllMotors dev speed =
                        , msgDeviceIndex = deviceIndex dev
                        , msgSpeeds = [MotorVibrate idx speed | idx <- [0..featureCount-1]]
                        }
-      sendMessage msg >>= expectOK
+      bpmSendMessage msg >>= expectOK
     _ -> throwString "This device can't vibrate!"
