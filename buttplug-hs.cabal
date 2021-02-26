@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 4f520ce257dac213e6f6d107a6e6157fe826f1a71a6dcd2573e60228841b20a9
+-- hash: b567109cadd72f81c51482455a21407fca7bf927b0e92d764c72be1ebdac617f
 
 name:           buttplug-hs
 version:        0.1.0.0
@@ -53,14 +53,12 @@ library
     , unliftio-core
     , unordered-containers
     , websockets
+    , wuss
   default-language: Haskell2010
 
 executable buttplug-hs-exe
   main-is: Main.hs
   other-modules:
-      Extra
-      MainOld
-      NonCore
       Paths_buttplug_hs
   hs-source-dirs:
       app
@@ -84,6 +82,7 @@ executable buttplug-hs-exe
     , unliftio-core
     , unordered-containers
     , websockets
+    , wuss
   default-language: Haskell2010
 
 test-suite buttplug-hs-test
@@ -113,4 +112,5 @@ test-suite buttplug-hs-test
     , unliftio-core
     , unordered-containers
     , websockets
+    , wuss
   default-language: Haskell2010

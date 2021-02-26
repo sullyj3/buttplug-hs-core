@@ -38,6 +38,7 @@ dependencies:
 - unliftio
 - unliftio-core
 - websockets
+- wuss
 
 library:
   source-dirs: src

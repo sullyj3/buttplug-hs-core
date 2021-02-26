@@ -1,6 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeFamilyDependencies #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE LambdaCase #-}
@@ -30,6 +35,7 @@ import qualified Data.ByteString              as BS
 import           Data.ByteString.Lazy         ( fromStrict )
 import           Data.Word                    ( Word8 )
 import qualified Network.WebSockets           as WS
+import qualified Wuss
 import           Network.Socket               ( withSocketsDo )
 import           Data.Aeson                   ( ToJSON(..)
                                               , FromJSON(..)
@@ -256,22 +262,6 @@ instance FromJSON Message where
                                                    , fieldLabelModifier = stripPrefix "msg" }
 
 
---------------------------------------------------------------------------------
-
-
-
-
-
-
-
-data ButtPlugConnection = WebSocketConnection { con  :: WS.Connection
-                                              }
-
-
-data Connector = WebSocketConnector { wsConnectorHost :: String
-                                    , wsConnectorPort :: Int
-                                    }
-
 -- messages that we may expect as a response to other messages
 isServerInfo :: Message -> Bool
 isServerInfo = \case
@@ -293,30 +283,46 @@ isDeviceList = \case
   (DeviceList {}) -> True
   _              -> False
 
-
 -----------
 -- IO
 -----------
-runClient :: Connector -> (ButtPlugConnection -> IO a) -> IO a
-runClient connector client = case connector of
-  (WebSocketConnector host port) ->
-    withSocketsDo $ WS.runClient host port "/" \wsCon ->
-      client (WebSocketConnection wsCon)
 
-sendMessage :: ButtPlugConnection -> Message -> IO ()
-sendMessage con msg = sendMessages con [msg]
-
--- the protocol allows sending multiple messages simultaneously, wrapped in a JSON array
-sendMessages :: ButtPlugConnection -> [Message] -> IO ()
-sendMessages con msgs = case con of
-  -- TODO: should look into giving messages a WebSocketsData instance
-  WebSocketConnection wsCon -> WS.sendTextData wsCon encoded
-  where encoded = encode msgs
 
 -- TODO: think about the best way to handle errors
-receiveMsgs :: ButtPlugConnection -> IO [Message]
-receiveMsgs (WebSocketConnection con) = do
-  received <- WS.receiveData con
-  case decode $ fromStrict received :: Maybe [Message] of
-    Just msgs -> pure msgs
-    Nothing -> error "Couldn't decode the message from the server"
+class Connector c where
+  type Connection c = conn | conn -> c
+  -- the protocol allows sending multiple messages simultaneously, wrapped in a JSON array
+  sendMessages :: Connection c -> [Message] -> IO ()
+
+
+  receiveMsgs :: Connection c -> IO [Message] 
+
+  runClient :: c -> (Connection c -> IO a) -> IO a
+
+sendMessage :: forall c. Connector c => Connection c -> Message -> IO ()
+sendMessage conn msg = sendMessages @c conn [msg]
+
+data WebSocketConnector = WebSocketConnector { wsConnectorHost :: String
+                                             , wsConnectorPort :: Int
+                                             }
+
+instance Connector WebSocketConnector where
+  type Connection WebSocketConnector = WS.Connection
+
+
+  -- TODO: should look into giving messages a WebSocketsData instance
+  sendMessages :: Connection WebSocketConnector -> [Message] -> IO ()
+  sendMessages wsCon msgs = WS.sendTextData wsCon (encode msgs)
+
+  receiveMsgs wsCon = do
+    received <- WS.receiveData wsCon
+    case decode $ fromStrict received :: Maybe [Message] of
+      Just msgs -> pure msgs
+      Nothing -> error "Couldn't decode the message from the server"
+
+  runClient (WebSocketConnector host port) client =
+    withSocketsDo $ WS.runClient host port "/" \wsCon ->
+      client wsCon
+
+
+
