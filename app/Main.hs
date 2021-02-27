@@ -16,8 +16,10 @@ import           Buttplug
 
 main :: IO ()
 main = do
- let connector = WebSocketConnector "localhost" 12345
- let clientName = "Haskell-example-client"
+ let connector = SecureWebSocketConnector { secureWSConnectorHost = "localhost"
+                                          , secureWSConnectorPort = 12345
+                                          , secureWSBypassCertVerify = True }
+ let clientName = "Haskell-example-buttplug-client"
 
  runClient connector \con -> do
    putStrLn "Beginning handshake..."
@@ -32,5 +34,6 @@ main = do
        T.putStrLn $ "Successfully connected to server \"" <> servName <> "\"!\n"
                  <> "(Press enter to exit)"
        _ <- getLine
+       sendMessage con $ Ping 2
        pure ()
      Nothing -> putStrLn "Did not receive handshake response"

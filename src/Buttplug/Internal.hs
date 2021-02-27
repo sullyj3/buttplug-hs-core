@@ -32,11 +32,18 @@ import           Data.Text                    ( Text )
 import qualified Data.Text                    as T
 import           Data.ByteString              ( ByteString )
 import qualified Data.ByteString              as BS
-import           Data.ByteString.Lazy         ( fromStrict )
+import           Data.ByteString.Lazy         ( fromStrict, toStrict )
 import           Data.Word                    ( Word8 )
 import qualified Network.WebSockets           as WS
+import           Network.WebSockets.Stream    ( makeStream )
 import qualified Wuss
-import           Network.Socket               ( withSocketsDo )
+import           Network.Connection           ( TLSSettings(..)
+                                              , ConnectionParams(..)
+                                              , initConnectionContext
+                                              , connectTo
+                                              , connectionGetChunk
+                                              , connectionPut )
+import           Network.Socket               ( withSocketsDo, PortNumber )
 import           Data.Aeson                   ( ToJSON(..)
                                               , FromJSON(..)
                                               , genericToJSON
@@ -302,13 +309,14 @@ class Connector c where
 sendMessage :: forall c. Connector c => Connection c -> Message -> IO ()
 sendMessage conn msg = sendMessages @c conn [msg]
 
-data WebSocketConnector = WebSocketConnector { wsConnectorHost :: String
-                                             , wsConnectorPort :: Int
-                                             }
+data WebSocketConnector = InsecureWebSocketConnector { insecureWSConnectorHost :: String
+                                                     , insecureWSConnectorPort :: Int }
+                        | SecureWebSocketConnector { secureWSConnectorHost :: String
+                                                   , secureWSConnectorPort :: PortNumber
+                                                   , secureWSBypassCertVerify :: Bool }
 
 instance Connector WebSocketConnector where
   type Connection WebSocketConnector = WS.Connection
-
 
   -- TODO: should look into giving messages a WebSocketsData instance
   sendMessages :: Connection WebSocketConnector -> [Message] -> IO ()
@@ -320,9 +328,32 @@ instance Connector WebSocketConnector where
       Just msgs -> pure msgs
       Nothing -> error "Couldn't decode the message from the server"
 
-  runClient (WebSocketConnector host port) client =
-    withSocketsDo $ WS.runClient host port "/" \wsCon ->
-      client wsCon
+  runClient connector client = withSocketsDo $ case connector of
+    InsecureWebSocketConnector host port ->
+       WS.runClient host port "/" client
+    SecureWebSocketConnector host port bypassCertVerify ->
+      if bypassCertVerify
+        then do
+          let options = WS.defaultConnectionOptions
+          let headers = []
+          let tlsSettings = TLSSettingsSimple
+                -- This is the important setting.
+                { settingDisableCertificateValidation = True
+                , settingDisableSession = False
+                , settingUseServerName = False
+                }
+          let connectionParams = ConnectionParams
+                { connectionHostname = host
+                , connectionPort = port
+                , connectionUseSecure = Just tlsSettings
+                , connectionUseSocks = Nothing
+                }
 
-
+          context <- initConnectionContext
+          connection <- connectTo context connectionParams
+          stream <- makeStream
+              (fmap Just (connectionGetChunk connection))
+              (maybe (return ()) (connectionPut connection . toStrict))
+          WS.runClientWithStream stream host "/" options headers client
+        else Wuss.runSecureClient host port "/" client
 

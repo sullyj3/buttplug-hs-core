@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: b567109cadd72f81c51482455a21407fca7bf927b0e92d764c72be1ebdac617f
+-- hash: 4a52f22ac68bc26735504df749a2d1bcabbe0e4911c81a72b96ee5272a082a03
 
 name:           buttplug-hs
 version:        0.1.0.0
@@ -41,6 +41,7 @@ library
     , async
     , base >=4.7 && <5
     , bytestring
+    , connection
     , containers
     , hspec
     , mtl
@@ -70,6 +71,7 @@ executable buttplug-hs-exe
     , base >=4.7 && <5
     , buttplug-hs
     , bytestring
+    , connection
     , containers
     , hspec
     , mtl
@@ -100,6 +102,7 @@ test-suite buttplug-hs-test
     , base >=4.7 && <5
     , buttplug-hs
     , bytestring
+    , connection
     , containers
     , hspec
     , mtl
