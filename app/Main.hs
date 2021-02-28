@@ -52,7 +52,7 @@ main = do
 
            -- we now print out any further messages the server sends us, until it
            -- disconnects. The first thing we should see is an "Ok Id=2" in
-           -- in response to our request to start scanning for devices.
+           -- response to our request to start scanning for devices.
            -- Additionally, the server will send us a message any time a device
            -- connects or disconnects
            putStrLn "(receiving messages)"
