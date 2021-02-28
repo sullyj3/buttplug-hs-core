@@ -50,7 +50,6 @@ data WebSocketConnector = InsecureWebSocketConnector { insecureWSConnectorHost :
 instance Connector WebSocketConnector where
   type Connection WebSocketConnector = WS.Connection
 
-  -- TODO: should look into giving messages a WebSocketsData instance
   sendMessages :: Connection WebSocketConnector -> [Message] -> IO ()
   sendMessages wsCon msgs = WS.sendTextData wsCon (encode msgs)
 

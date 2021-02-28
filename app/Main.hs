@@ -19,7 +19,9 @@ import           Buttplug
 main :: IO ()
 main = do
   {- A connector represents a method of connecting to a Buttplug server, and
-     contains all of the necessary information required to connect. -}
+     contains all of the necessary information required to connect. 
+     Connectors for secure and insecure websockets are included in this
+     library. You can create your own using the ButtplugConnector typeclass -}
   let connector =
         InsecureWebSocketConnector { insecureWSConnectorHost = "localhost"
                                    , insecureWSConnectorPort = 12345 }
