@@ -28,7 +28,7 @@ main = do
   -- runClient is responsible for establishing and closing the connection
   -- we pass it a function which takes a connection and returns an IO action
   -- which will make use of that connection to send and receive buttplug messages
-  handle handler $ runClient connector \con -> do
+  handle connectionErrors $ runClient connector \con -> do
     putStrLn "Beginning handshake..."
 
     -- A buttplug handshake involves sending the server a RequestServerInfo message.
@@ -60,8 +60,8 @@ main = do
 
   where
     -- TODO: this should be a buttplug error, client shouldn't care about websockets
-    handler :: WS.ConnectionException -> IO ()
-    handler = \case
+    connectionErrors :: WS.ConnectionException -> IO ()
+    connectionErrors = \case
       WS.ConnectionClosed -> putStrLn "Server closed the connection unexpectedly"
       WS.CloseRequest c _ -> putStrLn $
         "Server closed the connection: status code " <> show c
