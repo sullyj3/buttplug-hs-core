@@ -17,27 +17,49 @@ import           Buttplug
 
 main :: IO ()
 main = do
+  -- A connector represents a method of connecting to a buttplug server, and
+  -- contains all of the necessary information
   let connector =
         InsecureWebSocketConnector { insecureWSConnectorHost = "localhost"
                                    , insecureWSConnectorPort = 12345 }
   let clientName = "Haskell-example-buttplug-client"
 
+  -- runClient is responsible for establishing and closing the connection
+  -- we pass it a function which takes a connection and returns an IO action
+  -- which will make use of that connection to send and receive buttplug messages
   runClient connector \con -> do
     putStrLn "Beginning handshake..."
+
+    -- A buttplug handshake involves sending the server a RequestServerInfo message.
+    -- we use the sendMessage function to send messages
+    -- The server will reply with a ServerInfo message.
+    -- see https://buttplug-spec.docs.buttplug.io/architecture.html#stages
+    -- for details and diagrams
     sendMessage con
       RequestServerInfo { msgId = 1
                         , msgClientName = clientName
                         , msgMessageVersion = clientMessageVersion
                         }
+
+    -- we receive messages using the receiveMsgs function
     receiveMsgs con >>= \case
       [ServerInfo 1 servName _msgVersion _maxPingTime] -> handle
         handler
         do T.putStrLn $ "Successfully connected to server \"" <> servName <> "\"!"
+           -- once we have successfully connected to the server, we ask it to
+           -- begin scanning for devices. 
            putStrLn "Requesting device scan"
            sendMessage con $ StartScanning 2
+
+           -- we now print out any further messages the server sends us, until it
+           -- disconnects. The first thing we should see is an "Ok Id=2" in
+           -- in response to our request to start scanning for devices.
+           -- Additionally, the server will send us a message any time a device
+           -- connects or disconnects
            putStrLn "(receiving messages)"
            forever do arr <- receiveMsgs con
                       for_ arr print
+      -- this case would indicate a server bug, it's just here for completeness
       _ -> putStrLn "Did not receive expected handshake response"
 
   where
