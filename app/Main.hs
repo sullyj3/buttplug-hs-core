@@ -18,7 +18,7 @@ import           Buttplug
 
 main :: IO ()
 main = do
-  -- A connector represents a method of connecting to a buttplug server, and
+  -- A connector represents a method of connecting to a Buttplug server, and
   -- contains all of the necessary information required to connect.
   let connector =
         InsecureWebSocketConnector { insecureWSConnectorHost = "localhost"
@@ -27,11 +27,11 @@ main = do
 
   -- runClient is responsible for establishing and closing the connection
   -- we pass it a function which takes a connection and returns an IO action
-  -- which will make use of that connection to send and receive buttplug messages
+  -- which will make use of that connection to send and receive Buttplug messages
   handle connectionErrors $ runClient connector \con -> do
     putStrLn "Beginning handshake..."
 
-    -- A buttplug handshake involves sending the server a RequestServerInfo message.
+    -- A Buttplug handshake involves sending the server a RequestServerInfo message.
     -- we use the sendMessage function to send messages
     -- The server will reply with a ServerInfo message.
     -- see https://buttplug-spec.docs.buttplug.io/architecture.html#stages
@@ -59,7 +59,7 @@ main = do
       _ -> putStrLn "Did not receive expected handshake response"
 
   where
-    -- TODO: this should be a buttplug error, client shouldn't care about websockets
+    -- TODO: this should be a Buttplug error, client shouldn't care about websockets
     connectionErrors :: WS.ConnectionException -> IO ()
     connectionErrors = \case
       WS.ConnectionClosed -> putStrLn "Server closed the connection unexpectedly"
