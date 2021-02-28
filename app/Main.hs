@@ -42,9 +42,11 @@ main = do
 
     -- we receive messages using the receiveMsgs function
     receiveMsgs con >>= \case
-      [ServerInfo 1 servName _msgVersion _maxPingTime] -> handle
+      [ServerInfo 1 servName msgVersion maxPingTime] -> handle
         handler
         do T.putStrLn $ "Successfully connected to server \"" <> servName <> "\"!"
+           putStrLn $ "Message version: " <> show msgVersion <>
+                      "\nMax ping time (ms): " <> show maxPingTime
            -- once we have successfully connected to the server, we ask it to
            -- begin scanning for devices. 
            putStrLn "Requesting device scan"
