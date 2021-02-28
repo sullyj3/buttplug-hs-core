@@ -7,15 +7,12 @@ module Main where
 
 
 import           Data.List           (find)
-import qualified Data.Text           as T
 import qualified Data.Text.IO        as T
 import           Data.Foldable       (for_)
 import           Control.Monad       (forever)
-import           Control.Exception   (catch, handle)
+import           Control.Exception   (handle)
 import qualified Network.WebSockets  as WS
 
-import qualified Buttplug.Devices    as Dev
-import           Buttplug.Devices    (Device(..))
 import           Buttplug
 
 
@@ -36,7 +33,7 @@ main = do
     reply <- receiveMsgs con
     case find isServerInfo reply of
       Nothing -> putStrLn "Did not receive handshake response"
-      Just (ServerInfo 1 servName msgVersion maxPingTime) -> handle
+      Just (ServerInfo 1 servName _msgVersion _maxPingTime) -> handle
         handler
         do T.putStrLn $ "Successfully connected to server \"" <> servName <> "\"!"
            putStrLn "Requesting device scan"
