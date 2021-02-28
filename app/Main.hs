@@ -8,6 +8,7 @@ module Main where
 import           Data.List           (find)
 import qualified Data.Text           as T
 import qualified Data.Text.IO        as T
+import           Data.Foldable       (for_)
 
 import qualified Buttplug.Devices    as Dev
 import           Buttplug.Devices    (Device(..))
@@ -16,9 +17,9 @@ import           Buttplug
 
 main :: IO ()
 main = do
- let connector = SecureWebSocketConnector { secureWSConnectorHost = "localhost"
-                                          , secureWSConnectorPort = 12345
-                                          , secureWSBypassCertVerify = True }
+ let connector =
+       InsecureWebSocketConnector { insecureWSConnectorHost = "localhost"
+                                  , insecureWSConnectorPort = 12345 }
  let clientName = "Haskell-example-buttplug-client"
 
  runClient connector \con -> do
@@ -30,10 +31,16 @@ main = do
                        }
    reply <- receiveMsgs con
    case find isServerInfo reply of
-     Just (ServerInfo 1 servName msgVersion maxPingTime) -> do
-       T.putStrLn $ "Successfully connected to server \"" <> servName <> "\"!\n"
-                 <> "(Press enter to exit)"
-       _ <- getLine
-       sendMessage con $ Ping 2
-       pure ()
      Nothing -> putStrLn "Did not receive handshake response"
+     Just (ServerInfo 1 servName msgVersion maxPingTime) -> do
+       T.putStrLn $ "Successfully connected to server \"" <> servName <> "\"!"
+       putStrLn "Requesting device scan"
+       sendMessage con $ StartScanning 2
+       putStrLn "(receiving messages)"
+       loop con
+
+  where
+    loop con = do
+      arr <- receiveMsgs con
+      for_ arr print
+      loop con
