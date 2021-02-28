@@ -18,7 +18,7 @@ import           Buttplug
 main :: IO ()
 main = do
   -- A connector represents a method of connecting to a buttplug server, and
-  -- contains all of the necessary information
+  -- contains all of the necessary information required to connect.
   let connector =
         InsecureWebSocketConnector { insecureWSConnectorHost = "localhost"
                                    , insecureWSConnectorPort = 12345 }
