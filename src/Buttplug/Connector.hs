@@ -13,19 +13,6 @@
 
 module Buttplug.Connector where
 
--- TODO split into internal module for testing and user facing module
-{-( Message(..)
-                , MotorVibrate(..)
-                , ButtPlugConnection
-                , runClient
-                , sendMessage
-                , sendMessages
-                , close
-                , runButtPlugWSApp
-                , getConnection
-                , vibrateOnlyMotor
-                )-} 
-
 import           Data.ByteString.Lazy         ( fromStrict, toStrict )
 import qualified Network.WebSockets           as WS
 import           Network.WebSockets.Stream    ( makeStream )

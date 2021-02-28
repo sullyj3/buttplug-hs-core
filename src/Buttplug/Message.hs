@@ -13,19 +13,6 @@
 
 module Buttplug.Message where
 
--- TODO split into internal module for testing and user facing module
-{-( Message(..)
-                , MotorVibrate(..)
-                , ButtPlugConnection
-                , runClient
-                , sendMessage
-                , sendMessages
-                , close
-                , runButtPlugWSApp
-                , getConnection
-                , vibrateOnlyMotor
-                )-} 
-
 import           GHC.Generics
 import           Data.Text                    ( Text )
 import           Data.ByteString              ( ByteString )
@@ -42,6 +29,7 @@ import           Data.Map.Strict              ( Map )
 import qualified Buttplug.Devices             as Dev
 import           Buttplug.Devices             ( Device(..) )
 import           Buttplug.Internal.JSONUtils
+
 
 data ErrorCode = ERROR_UNKNOWN
                | ERROR_INIT
