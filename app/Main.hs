@@ -5,11 +5,13 @@
 module Main where
 
 
-import qualified Data.Text.IO        as T
-import           Data.Foldable       (for_)
-import           Control.Monad       (forever)
-import           Control.Exception   (handle)
-import qualified Network.WebSockets  as WS
+import qualified Data.Text.IO             as T
+import           Data.Foldable            (for_)
+import           Control.Monad            (forever)
+import           Control.Exception        (handle)
+import qualified Network.WebSockets       as WS
+import           Control.Concurrent.Async (concurrently_)
+import           Control.Concurrent       (threadDelay)
 
 import           Buttplug
 
@@ -42,24 +44,18 @@ main = do
 
     -- we receive messages using the receiveMsgs function
     receiveMsgs con >>= \case
-      [ServerInfo 1 servName msgVersion maxPingTime] -> handle
-        handler
-        do T.putStrLn $ "Successfully connected to server \"" <> servName <> "\"!"
-           putStrLn $ "Message version: " <> show msgVersion <>
-                      "\nMax ping time (ms): " <> show maxPingTime
-           -- once we have successfully connected to the server, we ask it to
-           -- begin scanning for devices. 
-           putStrLn "Requesting device scan"
-           sendMessage con $ StartScanning 2
+      [ServerInfo 1 servName msgVersion maxPingTime] ->
+        handle handler do
+          T.putStrLn $ "Successfully connected to server \"" <> servName <> "\"!"
+          putStrLn $ "Message version: " <> show msgVersion <>
+                     "\nMax ping time (ms): " <> show maxPingTime
+          -- once we have successfully connected to the server, we ask it to
+          -- begin scanning for devices. 
+          putStrLn "Requesting device scan"
+          sendMessage con $ StartScanning 2
 
-           -- we now print out any further messages the server sends us, until it
-           -- disconnects. The first thing we should see is an "Ok Id=2" in
-           -- response to our request to start scanning for devices.
-           -- Additionally, the server will send us a message any time a device
-           -- connects or disconnects
-           putStrLn "(receiving messages)"
-           forever do arr <- receiveMsgs con
-                      for_ arr print
+          concurrently_ (receiveAndPrintMsgs con)
+                        (pingServer maxPingTime con)
       -- this case would indicate a server bug, it's just here for completeness
       _ -> putStrLn "Did not receive expected handshake response"
 
@@ -72,3 +68,24 @@ main = do
         "Server closed the connection: status code " <> show c
       e -> do putStrLn "websocketError:"
               print e
+
+    -- we now print out any further messages the server sends us, until it
+    -- disconnects. The first thing we should see is an "Ok Id=2" in
+    -- response to our request to start scanning for devices.
+    -- Additionally, the server will send us a message any time a device
+    -- connects or disconnects. If the server specified a ping timeout, there
+    -- will also be an Ok response for each of our pings
+    receiveAndPrintMsgs con = do 
+      putStrLn "(receiving messages)"
+      forever do arr <- receiveMsgs con
+                 for_ arr print
+
+    -- if the server's maxPingTime is set to a value other than 0, we need to
+    -- ping it regularly, or it will disconnect us. We ping at twice the
+    -- specified rate to leave ourselves plenty of room
+    pingServer maxPingTime con = case maxPingTime of
+      0 -> pure ()
+      n -> forever do
+        sendMessage con (Ping 1)
+        threadDelay (n * 1000 `div` 2)
+
