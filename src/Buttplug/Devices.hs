@@ -50,6 +50,7 @@ instance FromJSON Device where
   parseJSON = genericParseJSON pascalCaseOptions
 ---------------------------------------------------------------
 
+-- Represents which message type the device supports
 data DeviceMessageType =
   -- Generic commands
     SingleMotorVibrateCmd -- deprecated
