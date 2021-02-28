@@ -3,13 +3,11 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeFamilyDependencies #-}
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Buttplug.Message where
 
@@ -243,21 +241,21 @@ instance FromJSON Message where
 -- messages that we may expect as a response to other messages
 isServerInfo :: Message -> Bool
 isServerInfo = \case
-  (ServerInfo {}) -> True
-  _               -> False
+  ServerInfo {} -> True
+  _             -> False
 
 isOk  :: Message -> Bool
 isOk = \case
-  (Ok {}) -> True
-  _       -> False
+  Ok {} -> True
+  _     -> False
 
 isScanningFinished :: Message -> Bool
 isScanningFinished = \case
-  (ScanningFinished {}) -> True
-  _                     -> False
+  ScanningFinished {} -> True
+  _                   -> False
 
 isDeviceList :: Message -> Bool
 isDeviceList = \case
-  (DeviceList {}) -> True
-  _              -> False
+  DeviceList {} -> True
+  _             -> False
 

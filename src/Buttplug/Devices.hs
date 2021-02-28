@@ -1,7 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE LambdaCase #-}
 module Buttplug.Devices where
 
 import           GHC.Generics
@@ -22,7 +21,7 @@ import           Data.HashMap.Strict as HMap
 
 import Buttplug.Internal.JSONUtils
 
-data MessageAttributes = MessageAttributes 
+newtype MessageAttributes = MessageAttributes 
        { featureCount :: Maybe Int }
   deriving (Generic, Show, Eq)
 
