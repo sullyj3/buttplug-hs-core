@@ -28,7 +28,7 @@ main = do
   -- runClient is responsible for establishing and closing the connection
   -- we pass it a function which takes a connection and returns an IO action
   -- which will make use of that connection to send and receive buttplug messages
-  runClient connector \con -> do
+  handle handler $ runClient connector \con -> do
     putStrLn "Beginning handshake..."
 
     -- A buttplug handshake involves sending the server a RequestServerInfo message.
@@ -44,18 +44,17 @@ main = do
 
     -- we receive messages using the receiveMsgs function
     receiveMsgs con >>= \case
-      [ServerInfo 1 servName msgVersion maxPingTime] ->
-        handle handler do
-          T.putStrLn $ "Successfully connected to server \"" <> servName <> "\"!"
-          putStrLn $ "Message version: " <> show msgVersion <>
-                     "\nMax ping time (ms): " <> show maxPingTime
-          -- once we have successfully connected to the server, we ask it to
-          -- begin scanning for devices. 
-          putStrLn "Requesting device scan"
-          sendMessage con $ StartScanning 2
+      [ServerInfo 1 servName msgVersion maxPingTime] -> do
+        T.putStrLn $ "Successfully connected to server \"" <> servName <> "\"!"
+        putStrLn $ "Message version: " <> show msgVersion <>
+                   "\nMax ping time (ms): " <> show maxPingTime
+        -- once we have successfully connected to the server, we ask it to
+        -- begin scanning for devices. 
+        putStrLn "Requesting device scan"
+        sendMessage con $ StartScanning 2
 
-          concurrently_ (receiveAndPrintMsgs con)
-                        (pingServer maxPingTime con)
+        concurrently_ (receiveAndPrintMsgs con)
+                      (pingServer maxPingTime con)
       -- this case would indicate a server bug, it's just here for completeness
       _ -> putStrLn "Did not receive expected handshake response"
 
