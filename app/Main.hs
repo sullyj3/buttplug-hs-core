@@ -6,7 +6,6 @@
 module Main where
 
 
-import           Data.List           (find)
 import qualified Data.Text.IO        as T
 import           Data.Foldable       (for_)
 import           Control.Monad       (forever)
@@ -30,10 +29,8 @@ main = do
                         , msgClientName = clientName
                         , msgMessageVersion = clientMessageVersion
                         }
-    reply <- receiveMsgs con
-    case find isServerInfo reply of
-      Nothing -> putStrLn "Did not receive handshake response"
-      Just (ServerInfo 1 servName _msgVersion _maxPingTime) -> handle
+    receiveMsgs con >>= \case
+      [ServerInfo 1 servName _msgVersion _maxPingTime] -> handle
         handler
         do T.putStrLn $ "Successfully connected to server \"" <> servName <> "\"!"
            putStrLn "Requesting device scan"
@@ -41,6 +38,7 @@ main = do
            putStrLn "(receiving messages)"
            forever do arr <- receiveMsgs con
                       for_ arr print
+      _ -> putStrLn "Did not receive expected handshake response"
 
   where
     -- TODO: this should be a buttplug error, client shouldn't care about websockets
