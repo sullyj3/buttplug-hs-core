@@ -19,9 +19,9 @@ import           Data.ByteString     (ByteString)
 import qualified Data.ByteString     as BS
 import           Data.Word                    ( Word8 )
 
-import           Buttplug.Internal
-import           Buttplug.Devices
-import qualified Buttplug.Devices as Dev
+import           Buttplug.Message
+import           Buttplug.Device
+import qualified Buttplug.Device as Dev
 import           Buttplug.Internal.JSONUtils
 
 main :: IO ()

@@ -4,8 +4,11 @@
 module Buttplug.Device where
 
 import           GHC.Generics
+import           Control.Monad       (foldM)
 import           Data.Map.Strict     (Map)
+import           Data.Maybe          (catMaybes)
 import           Data.Text           (Text)
+import           Data.Aeson.Types    ( Parser )
 import           Data.Aeson          ( ToJSON(..)
                                      , FromJSON(..)
                                      , ToJSONKey(..)
@@ -17,24 +20,32 @@ import           Data.Aeson          ( ToJSON(..)
                                      , genericToJSONKey
                                      , genericFromJSONKey
                                      , genericParseJSON)
-import           Data.HashMap.Strict as HMap
+import qualified Data.HashMap.Strict as HMap
 
 import Buttplug.Internal.JSONUtils
 
 -- TODO: add StepCount
-newtype MessageAttributes = MessageAttributes
-       { featureCount :: Maybe Word }
+data MessageAttributes = MessageAttributes
+       { attrFeatureCount :: Maybe Word
+       , attrStepCount :: Maybe [Word] }
   deriving (Generic, Show, Eq)
 
+
+-- TODO test these
 instance ToJSON MessageAttributes where
-  toJSON (MessageAttributes mFeatCount) = case mFeatCount of
-    Just n -> object ["FeatureCount" .= n]
-    Nothing -> object []
+  toJSON (MessageAttributes mFeatCount mStepCount) = object . catMaybes $
+      [ ("FeatureCount" .=) <$> mFeatCount
+      , ("StepCount"    .=) <$> mStepCount ]
 
 instance FromJSON MessageAttributes where
-  parseJSON (Object v) = MessageAttributes <$> case HMap.toList v of
-    [("FeatureCount", n)] -> Just <$> parseJSON n
-    _                     -> pure Nothing
+  parseJSON (Object objMap) = MessageAttributes <$> featureCount <*> stepCount
+    where featureCount :: Parser (Maybe Word)
+          featureCount = sequence $ parseJSON <$> HMap.lookup "FeatureCount" objMap
+
+          stepCount :: Parser (Maybe [Word])
+          stepCount = sequence $ parseJSON <$> HMap.lookup "StepCount" objMap
+  parseJSON _ = fail "Expected an object"
+
 
 ---------------------------------------------------------------
 data Device =
