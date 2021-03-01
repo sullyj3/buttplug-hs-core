@@ -135,8 +135,6 @@ instance FromJSON LinearActuate where
 
 
 
--- TODO: Technically some of these should be unsigned - Word rather than Int
--- deal with it if it comes up
 ------------------------------------------------
 data Message =
                -- status messages
