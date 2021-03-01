@@ -21,8 +21,9 @@ import           Data.HashMap.Strict as HMap
 
 import Buttplug.Internal.JSONUtils
 
-newtype MessageAttributes = MessageAttributes 
-       { featureCount :: Maybe Int }
+-- TODO: add StepCount
+newtype MessageAttributes = MessageAttributes
+       { featureCount :: Maybe Word }
   deriving (Generic, Show, Eq)
 
 instance ToJSON MessageAttributes where
@@ -38,7 +39,7 @@ instance FromJSON MessageAttributes where
 ---------------------------------------------------------------
 data Device =
        Device { deviceName :: Text
-              , deviceIndex :: Int
+              , deviceIndex :: Word
               , deviceMessages :: Map DeviceMessageType MessageAttributes
               }
   deriving (Generic, Show, Eq)

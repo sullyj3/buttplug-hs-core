@@ -48,7 +48,7 @@ errCodeFromInt = \case
 
 
 fromErrCode :: ErrorCode -> Int
-fromErrCode = fromEnum
+fromErrCode = fromIntegral . fromEnum
 
 
 instance ToJSON ErrorCode where
@@ -64,7 +64,7 @@ instance FromJSON ErrorCode where
 
 
 ------------------------------------------------
-clientMessageVersion :: Int
+clientMessageVersion :: Word
 clientMessageVersion = 2
 
 stripPrefix :: String -> String -> String
@@ -87,7 +87,7 @@ instance FromJSON RawData where
 
 ------------------------------------------------
 -- Used in VibrateCmd to specify the speed of the motor at the given index
-data MotorVibrate = MotorVibrate { index :: Int
+data MotorVibrate = MotorVibrate { index :: Word
                                  , speed :: Double
                                  }
   deriving (Generic, Show, Eq)
@@ -103,7 +103,7 @@ instance FromJSON MotorVibrate where
 
 ------------------------------------------------
 data Rotate = Rotate
-  { rotateIndex :: Int
+  { rotateIndex :: Word
   , rotateSpeed :: Double
   , rotateClockwise :: Bool
   }
@@ -119,8 +119,8 @@ instance FromJSON Rotate where
 
 ------------------------------------------------
 data LinearActuate = LinearActuate
-  { linActIndex :: Int
-  , linActDuration :: Int
+  { linActIndex :: Word
+  , linActDuration :: Word
   , linActPosition :: Double
   }
   deriving (Generic, Show, Eq)
@@ -140,89 +140,89 @@ instance FromJSON LinearActuate where
 ------------------------------------------------
 data Message =
                -- status messages
-               Ok { msgId :: Int }
-             | Error { msgId :: Int
+               Ok { msgId :: Word }
+             | Error { msgId :: Word
                      , msgErrorMessage :: Text
                      , msgErrorCode :: ErrorCode
                      }
-             | Ping { msgId :: Int }
+             | Ping { msgId :: Word }
                -- handshake messages
-             | RequestServerInfo { msgId :: Int
+             | RequestServerInfo { msgId :: Word
                                  , msgClientName :: Text
-                                 , msgMessageVersion :: Int
+                                 , msgMessageVersion :: Word
                                  }
-             | ServerInfo { msgId :: Int
+             | ServerInfo { msgId :: Word
                           , msgServerName :: Text
-                          , msgMessageVersion :: Int
-                          , msgMaxPingTime :: Int
+                          , msgMessageVersion :: Word
+                          , msgMaxPingTime :: Word
                           }
                -- enumeration messages
-             | StartScanning { msgId :: Int }
-             | StopScanning { msgId :: Int }
-             | ScanningFinished { msgId :: Int }
-             | RequestDeviceList { msgId :: Int }
-             | DeviceList { msgId :: Int
+             | StartScanning { msgId :: Word }
+             | StopScanning { msgId :: Word }
+             | ScanningFinished { msgId :: Word }
+             | RequestDeviceList { msgId :: Word }
+             | DeviceList { msgId :: Word
                           , msgDevices :: [ Device ]
                           }
-             | DeviceAdded { msgId :: Int
+             | DeviceAdded { msgId :: Word
                            , msgDeviceName :: Text
-                           , msgDeviceIndex :: Int
+                           , msgDeviceIndex :: Word
                            , msgDeviceMessages :: Map Dev.DeviceMessageType Dev.MessageAttributes
                            }
-             | DeviceRemoved { msgId :: Int
-                             , msgDeviceIndex :: Int
+             | DeviceRemoved { msgId :: Word
+                             , msgDeviceIndex :: Word
                              }
                -- raw device messages
-             | RawWriteCmd { msgId :: Int
-                           , msgDeviceIndex :: Int
+             | RawWriteCmd { msgId :: Word
+                           , msgDeviceIndex :: Word
                            , msgEndpoint :: Text
                            , msgData :: RawData
                            , msgWriteWithResponse :: Bool }
-             | RawReadCmd { msgId :: Int
-                          , msgDeviceIndex :: Int
+             | RawReadCmd { msgId :: Word
+                          , msgDeviceIndex :: Word
                           , msgEndpoint :: Text
-                          , msgExpectedLength :: Int
+                          , msgExpectedLength :: Word
                           , msgWaitForData :: Bool }
-             | RawReading { msgId :: Int
-                          , msgDeviceIndex :: Int
+             | RawReading { msgId :: Word
+                          , msgDeviceIndex :: Word
                           , msgEndpoint :: Text
                           , msgData :: RawData }
-             | RawSubscribeCmd { msgId :: Int
-                               , msgDeviceIndex :: Int
+             | RawSubscribeCmd { msgId :: Word
+                               , msgDeviceIndex :: Word
                                , msgEndpoint :: Text }
-             | RawUnsubscribeCmd { msgId :: Int
-                                 , msgDeviceIndex :: Int
+             | RawUnsubscribeCmd { msgId :: Word
+                                 , msgDeviceIndex :: Word
                                  , msgEndpoint :: Text }
                -- generic device messages
-             | StopDeviceCmd { msgId :: Int
-                             , msgDeviceIndex :: Int
+             | StopDeviceCmd { msgId :: Word
+                             , msgDeviceIndex :: Word
                              }
-             | StopAllDevices { msgId :: Int }
-             | VibrateCmd { msgId :: Int
-                          , msgDeviceIndex :: Int
+             | StopAllDevices { msgId :: Word }
+             | VibrateCmd { msgId :: Word
+                          , msgDeviceIndex :: Word
                           , msgSpeeds :: [ MotorVibrate ]
                           }
-             | LinearCmd { msgId :: Int
-                         , msgDeviceIndex :: Int
+             | LinearCmd { msgId :: Word
+                         , msgDeviceIndex :: Word
                          , msgVectors :: [ LinearActuate ]
                          }
-             | RotateCmd { msgId :: Int
-                         , msgDeviceIndex :: Int
+             | RotateCmd { msgId :: Word
+                         , msgDeviceIndex :: Word
                          , msgRotations :: [ Rotate ]
                          }
                -- generic sensor messages
-             | BatteryLevelCmd { msgId :: Int
-                               , msgDeviceIndex :: Int
+             | BatteryLevelCmd { msgId :: Word
+                               , msgDeviceIndex :: Word
                                }
-             | BatteryLevelReading { msgId :: Int
-                                   , msgDeviceIndex :: Int
+             | BatteryLevelReading { msgId :: Word
+                                   , msgDeviceIndex :: Word
                                    , msgBatteryLevel :: Double
                                    }
-             | RSSILevelCmd { msgId :: Int
-                            , msgDeviceIndex :: Int
+             | RSSILevelCmd { msgId :: Word
+                            , msgDeviceIndex :: Word
                             }
-             | RSSILevelReading { msgId :: Int
-                                , msgDeviceIndex :: Int
+             | RSSILevelReading { msgId :: Word
+                                , msgDeviceIndex :: Word
                                 , msgRSSILevel :: Int
                                 }
   deriving (Show, Eq, Generic)

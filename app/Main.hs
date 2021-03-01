@@ -89,9 +89,10 @@ main = do
     {- If the server's maxPingTime is set to a value other than 0, we need to
        ping it regularly, or it will disconnect us. We ping at twice the
        specified rate to leave ourselves plenty of room. -}
+    pingServer :: Word -> Connection WebSocketConnector -> IO ()
     pingServer maxPingTime con = case maxPingTime of
       0 -> pure ()
       n -> forever do
         sendMessage con (Ping 1)
-        threadDelay (n * 1000 `div` 2)
+        threadDelay $ fromIntegral (n * 1000 `div` 2)
 
