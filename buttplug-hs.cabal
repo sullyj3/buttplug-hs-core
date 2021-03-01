@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 1249fa6579d14a34484e26f3f4a5c4d4e5d15ac06c921195791aa97556368d97
+-- hash: 8b84dab0c604c34307fbe39e1fd89f6b7b91d70ef1ecee873f647e66d5ab9446
 
 name:           buttplug-hs
 version:        0.1.0.0
@@ -45,14 +45,8 @@ library
     , connection
     , containers
     , hspec
-    , mtl
     , network
-    , random
-    , stm
     , text
-    , transformers
-    , unliftio
-    , unliftio-core
     , unordered-containers
     , websockets
     , wuss
@@ -75,14 +69,8 @@ executable buttplug-hs-exe
     , connection
     , containers
     , hspec
-    , mtl
     , network
-    , random
-    , stm
     , text
-    , transformers
-    , unliftio
-    , unliftio-core
     , unordered-containers
     , websockets
     , wuss
@@ -106,14 +94,8 @@ test-suite buttplug-hs-test
     , connection
     , containers
     , hspec
-    , mtl
     , network
-    , random
-    , stm
     , text
-    , transformers
-    , unliftio
-    , unliftio-core
     , unordered-containers
     , websockets
     , wuss

@@ -28,16 +28,10 @@ dependencies:
 - bytestring
 - connection
 - hspec
-- mtl
 - network
-- random
-- stm
 - text
-- transformers
 - containers
 - unordered-containers
-- unliftio
-- unliftio-core
 - websockets
 - wuss
 
