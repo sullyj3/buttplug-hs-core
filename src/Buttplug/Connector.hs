@@ -7,10 +7,13 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Buttplug.Connector where
 
+import           Control.Exception
 import           Data.ByteString.Lazy         ( fromStrict, toStrict )
+import           Data.ByteString              ( ByteString )
 import qualified Network.WebSockets           as WS
 import           Network.WebSockets.Stream    ( makeStream )
 import qualified Wuss
@@ -27,7 +30,7 @@ import           Data.Aeson                   ( encode
 import           Buttplug.Message
 
 
--- TODO: think about the best way to handle errors
+-- Connector instances should throw only ConnectorException
 class Connector c where
   type Connection c = conn | conn -> c
   -- the protocol allows sending multiple messages simultaneously, wrapped in a JSON array
@@ -47,44 +50,71 @@ data WebSocketConnector = InsecureWebSocketConnector { insecureWSConnectorHost :
                                                    , secureWSConnectorPort :: PortNumber
                                                    , secureWSBypassCertVerify :: Bool }
 
+-- I'm not incredibly psyched about this design, but it's not immediately
+-- obvious to me how to improve it.
+data ConnectorException = ConnectionFailed String
+                        | UnexpectedConnectionClosed
+                        | ConnectionClosedNormally
+                        | InvalidMessage ByteString
+                        | OtherConnectorError String
+  deriving Show
+
+instance Exception ConnectorException
+
+
+--------------------
+
 instance Connector WebSocketConnector where
   type Connection WebSocketConnector = WS.Connection
 
   sendMessages :: Connection WebSocketConnector -> [Message] -> IO ()
-  sendMessages wsCon msgs = WS.sendTextData wsCon (encode msgs)
+  sendMessages wsCon msgs = handle handleWSConnException $
+    WS.sendTextData wsCon (encode msgs)
 
-  receiveMsgs wsCon = do
+  receiveMsgs :: Connection WebSocketConnector -> IO [Message]
+  receiveMsgs wsCon = handle handleWSConnException $ do
     received <- WS.receiveData wsCon
     case decode $ fromStrict received :: Maybe [Message] of
       Just msgs -> pure msgs
-      Nothing -> error "Couldn't decode the message from the server"
+      Nothing -> throwIO $ InvalidMessage received
 
-  runClient connector client = withSocketsDo $ case connector of
-    InsecureWebSocketConnector host port ->
-       WS.runClient host port "/" client
-    SecureWebSocketConnector host port bypassCertVerify ->
-      if bypassCertVerify
-        then do
-          let options = WS.defaultConnectionOptions
-          let headers = []
-          let tlsSettings = TLSSettingsSimple
-                -- This is the important setting.
-                { settingDisableCertificateValidation = True
-                , settingDisableSession = False
-                , settingUseServerName = False
-                }
-          let connectionParams = ConnectionParams
-                { connectionHostname = host
-                , connectionPort = port
-                , connectionUseSecure = Just tlsSettings
-                , connectionUseSocks = Nothing
-                }
+  -- TODO: handle socket does not exist connection refused
+  runClient connector client =
+    handle handleConnectionFailed $
+      withSocketsDo $ case connector of
+        InsecureWebSocketConnector host port ->
+           WS.runClient host port "/" client
+        SecureWebSocketConnector host port bypassCertVerify ->
+          if bypassCertVerify
+            then do
+              let options = WS.defaultConnectionOptions
+              let headers = []
+              let tlsSettings = TLSSettingsSimple
+                    -- This is the important setting.
+                    { settingDisableCertificateValidation = True
+                    , settingDisableSession = False
+                    , settingUseServerName = False
+                    }
+              let connectionParams = ConnectionParams
+                    { connectionHostname = host
+                    , connectionPort = port
+                    , connectionUseSecure = Just tlsSettings
+                    , connectionUseSocks = Nothing
+                    }
 
-          context <- initConnectionContext
-          connection <- connectTo context connectionParams
-          stream <- makeStream
-              (fmap Just (connectionGetChunk connection))
-              (maybe (return ()) (connectionPut connection . toStrict))
-          WS.runClientWithStream stream host "/" options headers client
-        else Wuss.runSecureClient host port "/" client
+              context <- initConnectionContext
+              connection <- connectTo context connectionParams
+              stream <- makeStream
+                  (fmap Just (connectionGetChunk connection))
+                  (maybe (return ()) (connectionPut connection . toStrict))
+              WS.runClientWithStream stream host "/" options headers client
+            else Wuss.runSecureClient host port "/" client
 
+handleConnectionFailed :: WS.HandshakeException -> IO a
+handleConnectionFailed e = throwIO (ConnectionFailed $ show e)
+
+handleWSConnException :: WS.ConnectionException -> IO a
+handleWSConnException = \case
+  WS.ConnectionClosed    -> throwIO UnexpectedConnectionClosed
+  WS.CloseRequest 1000 _ -> throwIO ConnectionClosedNormally
+  e                      -> throwIO $ OtherConnectorError (show e)

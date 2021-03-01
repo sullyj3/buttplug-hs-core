@@ -30,7 +30,7 @@ main = do
   {- runClient is responsible for establishing and closing the connection.
      We pass it a function which takes a connection and returns an IO action,
      which will make use of that connection to send and receive Buttplug messages. -}
-  handle connectionErrors $ runClient connector \con -> do
+  handle handleConnectorException $ runClient connector \con -> do
     putStrLn "Beginning handshake..."
 
     {- A Buttplug handshake involves sending the server a RequestServerInfo message.
@@ -61,14 +61,18 @@ main = do
       _ -> putStrLn "Did not receive expected handshake response"
 
   where
-    -- TODO: this should be a Buttplug error, client shouldn't care about websockets
-    connectionErrors :: WS.ConnectionException -> IO ()
-    connectionErrors = \case
-      WS.ConnectionClosed -> putStrLn "Server closed the connection unexpectedly"
-      WS.CloseRequest c _ -> putStrLn $
-        "Server closed the connection: status code " <> show c
-      e -> do putStrLn "websocketError:"
-              print e
+    handleConnectorException :: ConnectorException -> IO ()
+    handleConnectorException = \case
+      ConnectionFailed e -> putStrLn $ "Connection failed: " <> show e
+      UnexpectedConnectionClosed ->
+        putStrLn "Server closed the connection unexpectedly"
+      ConnectionClosedNormally -> putStrLn "Server closed the connection"
+      InvalidMessage bs -> do
+        putStrLn $ "Server sent a message we didn't recognize:"
+        print bs
+      OtherConnectorError err -> do
+        putStrLn $ "Connector error:" ++ err
+
 
     {- We now print out any further messages the server sends us, until it
        disconnects. The first thing we should see is an "Ok Id=2" in
