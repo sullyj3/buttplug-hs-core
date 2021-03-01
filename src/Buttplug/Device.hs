@@ -14,12 +14,14 @@ import           Data.Aeson          ( ToJSON(..)
                                      , ToJSONKey(..)
                                      , FromJSONKey(..)
                                      , (.=)
+                                     , (.:?)
                                      , Value(..)
                                      , object
                                      , genericToJSON
                                      , genericToJSONKey
                                      , genericFromJSONKey
-                                     , genericParseJSON)
+                                     , genericParseJSON
+                                     , withObject )
 import qualified Data.HashMap.Strict as HMap
 
 import Buttplug.Internal.JSONUtils
@@ -33,18 +35,12 @@ data MessageAttributes = MessageAttributes
 
 -- TODO test these
 instance ToJSON MessageAttributes where
-  toJSON (MessageAttributes mFeatCount mStepCount) = object . catMaybes $
-      [ ("FeatureCount" .=) <$> mFeatCount
-      , ("StepCount"    .=) <$> mStepCount ]
+  toJSON = genericToJSON omitNothingOptions
 
 instance FromJSON MessageAttributes where
-  parseJSON (Object objMap) = MessageAttributes <$> featureCount <*> stepCount
-    where featureCount :: Parser (Maybe Word)
-          featureCount = sequence $ parseJSON <$> HMap.lookup "FeatureCount" objMap
-
-          stepCount :: Parser (Maybe [Word])
-          stepCount = sequence $ parseJSON <$> HMap.lookup "StepCount" objMap
-  parseJSON _ = fail "Expected an object"
+  parseJSON = withObject "MessageAttributes" \v -> MessageAttributes
+    <$> v .:? "FeatureCount"
+    <*> v .:? "StepCount"
 
 
 ---------------------------------------------------------------

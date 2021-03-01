@@ -8,3 +8,6 @@ pascalCaseOptions = defaultOptions { fieldLabelModifier = pascalCase }
 
 pascalCaseKeyOptions :: JSONKeyOptions
 pascalCaseKeyOptions = defaultJSONKeyOptions { keyModifier = pascalCase }
+
+omitNothingOptions :: Options
+omitNothingOptions = defaultOptions { omitNothingFields = True }
