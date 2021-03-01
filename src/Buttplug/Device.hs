@@ -26,7 +26,6 @@ import qualified Data.HashMap.Strict as HMap
 
 import Buttplug.Internal.JSONUtils
 
--- TODO: add StepCount
 data MessageAttributes = MessageAttributes
        { attrFeatureCount :: Maybe Word
        , attrStepCount :: Maybe [Word] }
