@@ -104,7 +104,7 @@ instance FromJSON MotorVibrate where
 ------------------------------------------------
 data Rotate = Rotate
   { rotateIndex :: Int
-  , rotateDuration :: Int
+  , rotateSpeed :: Double
   , rotateClockwise :: Bool
   }
   deriving (Generic, Show, Eq)
@@ -138,7 +138,14 @@ instance FromJSON LinearActuate where
 -- TODO: Technically some of these should be unsigned - Word rather than Int
 -- deal with it if it comes up
 ------------------------------------------------
-data Message = 
+data Message =
+               -- status messages
+             | Ok { msgId :: Int }
+             | Error { msgId :: Int
+                     , msgErrorMessage :: Text
+                     , msgErrorCode :: ErrorCode
+                     }
+             | Ping { msgId :: Int }
                -- handshake messages
                RequestServerInfo { msgId :: Int
                                  , msgClientName :: Text
@@ -149,13 +156,6 @@ data Message =
                           , msgMessageVersion :: Int
                           , msgMaxPingTime :: Int
                           }
-               -- status messages
-             | Ok { msgId :: Int }
-             | Error { msgId :: Int
-                     , msgErrorMessage :: Text
-                     , msgErrorCode :: ErrorCode
-                     }
-             | Ping { msgId :: Int }
                -- enumeration messages
              | StartScanning { msgId :: Int }
              | StopScanning { msgId :: Int }

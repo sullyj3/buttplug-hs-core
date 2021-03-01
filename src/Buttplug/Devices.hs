@@ -50,24 +50,19 @@ instance FromJSON Device where
   parseJSON = genericParseJSON pascalCaseOptions
 ---------------------------------------------------------------
 
--- Represents which message type the device supports
+-- Represents which message types the device supports
 data DeviceMessageType =
-  -- Generic commands
-    SingleMotorVibrateCmd -- deprecated
+  -- Raw Device commands
+  | RawWriteCmd
+  | RawReadCmd
+  | RawSubscribeCmd
+  | RawUnsubscribeCmd
+  -- Generic Device commands
+  | StopDeviceCmd
   | VibrateCmd
   | LinearCmd
   | RotateCmd
-  | RawWriteCmd
-  | RawReadCmd
-  | StopDeviceCmd
-  | SubscribeCmd
-  | UnsubscribeCmd
 
-  -- Deprecated device specific commands
-  | FleshlightLaunchFW12Cmd
-  | LovenseCmd
-  | KiirooCmd
-  | VorzeA10CycloneCmd
   deriving (Generic, Show, Eq, Ord)
 
 instance ToJSON DeviceMessageType where
