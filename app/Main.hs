@@ -63,7 +63,9 @@ main = do
   where
     handleConnectorException :: ConnectorException -> IO ()
     handleConnectorException = \case
-      ConnectionFailed e -> putStrLn $ "Connection failed: " <> show e
+      ConnectionFailed e -> do 
+        putStrLn "Connection to Buttplug server failed: "
+        putStrLn e
       UnexpectedConnectionClosed ->
         putStrLn "Server closed the connection unexpectedly"
       ConnectionClosedNormally -> putStrLn "Server closed the connection"

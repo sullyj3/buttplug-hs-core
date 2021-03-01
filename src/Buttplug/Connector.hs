@@ -12,6 +12,7 @@
 module Buttplug.Connector where
 
 import           Control.Exception
+import           System.IO.Error              ( isDoesNotExistError )
 import           Data.ByteString.Lazy         ( fromStrict, toStrict )
 import           Data.ByteString              ( ByteString )
 import qualified Network.WebSockets           as WS
@@ -80,7 +81,7 @@ instance Connector WebSocketConnector where
 
   -- TODO: handle socket does not exist connection refused
   runClient connector client =
-    handle handleConnectionFailed $
+    handle handleSockConnFailed $ handle handleWSConnFailed $
       withSocketsDo $ case connector of
         InsecureWebSocketConnector host port ->
            WS.runClient host port "/" client
@@ -110,8 +111,13 @@ instance Connector WebSocketConnector where
               WS.runClientWithStream stream host "/" options headers client
             else Wuss.runSecureClient host port "/" client
 
-handleConnectionFailed :: WS.HandshakeException -> IO a
-handleConnectionFailed e = throwIO (ConnectionFailed $ show e)
+handleWSConnFailed :: WS.HandshakeException -> IO a
+handleWSConnFailed e = throwIO (ConnectionFailed $ show e)
+
+handleSockConnFailed :: IOError -> IO a
+handleSockConnFailed e
+  | isDoesNotExistError e = throwIO (ConnectionFailed $ show e)
+  | otherwise           = throwIO e
 
 handleWSConnException :: WS.ConnectionException -> IO a
 handleWSConnException = \case
