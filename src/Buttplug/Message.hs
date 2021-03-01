@@ -24,8 +24,8 @@ import           Data.Aeson                   ( ToJSON(..)
                                               )
 import           Data.Map.Strict              ( Map )
 
-import qualified Buttplug.Devices             as Dev
-import           Buttplug.Devices             ( Device(..) )
+import qualified Buttplug.Device              as Dev
+import           Buttplug.Device              ( Device(..) )
 import           Buttplug.Internal.JSONUtils
 
 
@@ -140,14 +140,14 @@ instance FromJSON LinearActuate where
 ------------------------------------------------
 data Message =
                -- status messages
-             | Ok { msgId :: Int }
+               Ok { msgId :: Int }
              | Error { msgId :: Int
                      , msgErrorMessage :: Text
                      , msgErrorCode :: ErrorCode
                      }
              | Ping { msgId :: Int }
                -- handshake messages
-               RequestServerInfo { msgId :: Int
+             | RequestServerInfo { msgId :: Int
                                  , msgClientName :: Text
                                  , msgMessageVersion :: Int
                                  }

@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE DeriveGeneric #-}
-module Buttplug.Devices where
+module Buttplug.Device where
 
 import           GHC.Generics
 import           Data.Map.Strict     (Map)
@@ -53,7 +53,7 @@ instance FromJSON Device where
 -- Represents which message types the device supports
 data DeviceMessageType =
   -- Raw Device commands
-  | RawWriteCmd
+    RawWriteCmd
   | RawReadCmd
   | RawSubscribeCmd
   | RawUnsubscribeCmd
