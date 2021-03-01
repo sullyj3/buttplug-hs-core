@@ -215,9 +215,9 @@ data Message =
                                , msgDeviceIndex :: Int
                                }
              | BatteryLevelReading { msgId :: Int
-                               , msgDeviceIndex :: Int
-                               , msgBatteryLevel :: Double
-                               }
+                                   , msgDeviceIndex :: Int
+                                   , msgBatteryLevel :: Double
+                                   }
              | RSSILevelCmd { msgId :: Int
                             , msgDeviceIndex :: Int
                             }
