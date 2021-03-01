@@ -79,7 +79,6 @@ instance Connector WebSocketConnector where
       Just msgs -> pure msgs
       Nothing -> throwIO $ InvalidMessage received
 
-  -- TODO: handle socket does not exist connection refused
   runClient connector client =
     handle handleSockConnFailed $ handle handleWSConnFailed $
       withSocketsDo $ case connector of
@@ -117,7 +116,7 @@ handleWSConnFailed e = throwIO (ConnectionFailed $ show e)
 handleSockConnFailed :: IOError -> IO a
 handleSockConnFailed e
   | isDoesNotExistError e = throwIO (ConnectionFailed $ show e)
-  | otherwise           = throwIO e
+  | otherwise             = throwIO e
 
 handleWSConnException :: WS.ConnectionException -> IO a
 handleWSConnException = \case
