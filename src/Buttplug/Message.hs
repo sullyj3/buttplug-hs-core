@@ -87,17 +87,17 @@ instance FromJSON RawData where
 
 ------------------------------------------------
 -- Used in VibrateCmd to specify the speed of the motor at the given index
-data MotorVibrate = MotorVibrate { index :: Word
-                                 , speed :: Double
-                                 }
+data Vibrate = Vibrate { vibrateIndex :: Word
+                       , vibrateSpeed :: Double
+                       }
   deriving (Generic, Show, Eq)
 
 
-instance ToJSON MotorVibrate where
+instance ToJSON Vibrate where
   toJSON = genericToJSON pascalCaseOptions
 
 
-instance FromJSON MotorVibrate where
+instance FromJSON Vibrate where
   parseJSON = genericParseJSON pascalCaseOptions
 
 
@@ -200,7 +200,7 @@ data Message =
              | StopAllDevices { msgId :: Word }
              | VibrateCmd { msgId :: Word
                           , msgDeviceIndex :: Word
-                          , msgSpeeds :: [ MotorVibrate ]
+                          , msgSpeeds :: [ Vibrate ]
                           }
              | LinearCmd { msgId :: Word
                          , msgDeviceIndex :: Word
