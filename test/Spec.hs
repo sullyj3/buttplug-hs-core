@@ -34,18 +34,16 @@ import           Data.ByteString.Lazy     ( toStrict )
 import           Data.Word                ( Word8 )
 
 import           Buttplug.Message
-import           Buttplug.Device ( Device(..)
-                                 , MessageAttributes(..))
-import qualified Buttplug.Device as Dev
+import           Buttplug.Device
 import           Buttplug.Internal.JSONUtils
 
 instance Arbitrary RawData where
   arbitrary = genericArbitraryU
   shrink = genericShrink
-instance Arbitrary Dev.MessageAttributes where
+instance Arbitrary MessageAttributes where
   arbitrary = genericArbitraryU
   shrink = genericShrink
-instance Arbitrary Dev.DeviceMessageType where
+instance Arbitrary DeviceMessageType where
   arbitrary = genericArbitraryU
   shrink = genericShrink
 instance Arbitrary Device where
@@ -217,11 +215,11 @@ testButtplug = do
           msg =
             DeviceList 1
               [ Device "TestDevice 1" 0 $ Map.fromList
-                  [ (Dev.VibrateCmd, MessageAttributes (Just 2) Nothing)
-                  , (Dev.StopDeviceCmd, MessageAttributes Nothing Nothing )]
+                  [ (DevVibrateCmd, MessageAttributes (Just 2) Nothing)
+                  , (DevStopDeviceCmd, MessageAttributes Nothing Nothing )]
               , Device "TestDevice 2" 1 $ Map.fromList
-                  [ (Dev.LinearCmd, MessageAttributes (Just 1) Nothing)
-                  , (Dev.StopDeviceCmd, MessageAttributes Nothing Nothing )]
+                  [ (DevLinearCmd, MessageAttributes (Just 1) Nothing)
+                  , (DevStopDeviceCmd, MessageAttributes Nothing Nothing )]
               ]
       it "Can decode it" do
         decode s `shouldBe` Just msg
@@ -241,8 +239,8 @@ testButtplug = do
                     }
                   }|]
           msg = DeviceAdded 0 "TestDevice 1" 0 $ Map.fromList
-            [ (Dev.VibrateCmd, MessageAttributes (Just 2) Nothing)
-            , (Dev.StopDeviceCmd, MessageAttributes Nothing Nothing )]
+            [ (DevVibrateCmd, MessageAttributes (Just 2) Nothing)
+            , (DevStopDeviceCmd, MessageAttributes Nothing Nothing )]
       it "Can decode it" do
         decode s `shouldBe` Just msg
       it "Can encode it" do

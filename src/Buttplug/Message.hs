@@ -29,6 +29,12 @@ import           Buttplug.Device              ( Device(..) )
 import           Buttplug.Internal.JSONUtils
 
 
+------------------------------------------------
+clientMessageVersion :: Word
+clientMessageVersion = 2
+------------------------------------------------
+
+
 data ErrorCode = ERROR_UNKNOWN
                | ERROR_INIT
                | ERROR_PING
@@ -61,13 +67,6 @@ instance FromJSON ErrorCode where
     case m of
       Nothing -> fail "Error code should be an int"
       Just e -> pure e
-
-
-------------------------------------------------
-clientMessageVersion :: Word
-clientMessageVersion = 2
-
-
 
 ------------------------------------------------
 -- used for the various Raw* commands. Circumvents the fact that Aeson doesn't 
@@ -130,7 +129,6 @@ instance ToJSON LinearActuate where
 
 instance FromJSON LinearActuate where
   parseJSON = genericParseJSON pascalCaseOptions { fieldLabelModifier = stripPrefix "linAct" }
-
 
 
 ------------------------------------------------

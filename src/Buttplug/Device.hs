@@ -60,25 +60,25 @@ instance FromJSON Device where
 -- Represents which message types the device supports
 data DeviceMessageType =
   -- Raw Device commands
-    RawWriteCmd
-  | RawReadCmd
-  | RawSubscribeCmd
-  | RawUnsubscribeCmd
+    DevRawWriteCmd
+  | DevRawReadCmd
+  | DevRawSubscribeCmd
+  | DevRawUnsubscribeCmd
   -- Generic Device commands
-  | StopDeviceCmd
-  | VibrateCmd
-  | LinearCmd
-  | RotateCmd
+  | DevStopDeviceCmd
+  | DevVibrateCmd
+  | DevLinearCmd
+  | DevRotateCmd
   deriving (Generic, Show, Eq, Ord)
 
 instance ToJSON DeviceMessageType where
-  toJSON = genericToJSON pascalCaseOptions
+  toJSON = genericToJSON deviceMessageOptions
 
 instance FromJSON DeviceMessageType where
-  parseJSON = genericParseJSON pascalCaseOptions
+  parseJSON = genericParseJSON deviceMessageOptions
 
 instance ToJSONKey DeviceMessageType where
-  toJSONKey = genericToJSONKey pascalCaseKeyOptions
+  toJSONKey = genericToJSONKey (stripPrefixKeyOptions "Dev")
 
 instance FromJSONKey DeviceMessageType where
-  fromJSONKey = genericFromJSONKey pascalCaseKeyOptions
+  fromJSONKey = genericFromJSONKey (stripPrefixKeyOptions "Dev")

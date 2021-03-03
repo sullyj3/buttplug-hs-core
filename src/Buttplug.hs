@@ -21,11 +21,13 @@ module Buttplug
   , sendMessage
   , WebSocketConnector(..)
   , ConnectorException(..)
+
   -- Device.hs
-
+  , MessageAttributes(..)
+  , Device(..)
+  , DeviceMessageType(..)
   ) where
-
--- todo - decide what should be uservisible by default
 
 import Buttplug.Message
 import Buttplug.Connector
+import Buttplug.Device
