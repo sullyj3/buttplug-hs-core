@@ -4,13 +4,13 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f9a8a07509e1dcabe5b9164dba1d6935c2e8d733f3f9625daffc08e4ae3eacca
+-- hash: 784999ea01e966d05dea21957f6c23499bffb3222bc4a66b2157cc5ab24125c1
 
-name:           buttplug-hs
+name:           buttplug-hs-core
 version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/sullyj3/buttplug-hs#readme>
-homepage:       https://github.com/sullyj3/buttplug-hs#readme
-bug-reports:    https://github.com/sullyj3/buttplug-hs/issues
+description:    Please see the README on GitHub at <https://github.com/sullyj3/buttplug-hs-core#readme>
+homepage:       https://github.com/sullyj3/buttplug-hs-core#readme
+bug-reports:    https://github.com/sullyj3/buttplug-hs-core/issues
 author:         James Sully
 maintainer:     sullyj3@gmail.com
 copyright:      2020 James Sully
@@ -23,7 +23,7 @@ extra-source-files:
 
 source-repository head
   type: git
-  location: https://github.com/sullyj3/buttplug-hs
+  location: https://github.com/sullyj3/buttplug-hs-core
 
 library
   exposed-modules:
@@ -33,7 +33,7 @@ library
       Buttplug.Internal.JSONUtils
       Buttplug.Message
   other-modules:
-      Paths_buttplug_hs
+      Paths_buttplug_hs_core
   hs-source-dirs:
       src
   build-depends:
@@ -51,10 +51,10 @@ library
     , wuss
   default-language: Haskell2010
 
-executable buttplug-hs-exe
+executable buttplug-hs-core-exe
   main-is: Main.hs
   other-modules:
-      Paths_buttplug_hs
+      Paths_buttplug_hs_core
   hs-source-dirs:
       app
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
@@ -63,7 +63,7 @@ executable buttplug-hs-exe
     , aeson-casing
     , async
     , base >=4.7 && <5
-    , buttplug-hs
+    , buttplug-hs-core
     , bytestring
     , connection
     , containers
@@ -77,7 +77,7 @@ executable buttplug-hs-exe
 executable example-1
   main-is: example1.hs
   other-modules:
-      Paths_buttplug_hs
+      Paths_buttplug_hs_core
   hs-source-dirs:
       examples
   build-depends:
@@ -98,7 +98,7 @@ executable example-1
 executable example-2
   main-is: example2.hs
   other-modules:
-      Paths_buttplug_hs
+      Paths_buttplug_hs_core
   hs-source-dirs:
       examples
   build-depends:
@@ -116,11 +116,11 @@ executable example-2
     , wuss
   default-language: Haskell2010
 
-test-suite buttplug-hs-test
+test-suite buttplug-hs-core-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      Paths_buttplug_hs
+      Paths_buttplug_hs_core
   hs-source-dirs:
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
@@ -131,7 +131,7 @@ test-suite buttplug-hs-test
     , aeson-pretty
     , async
     , base >=4.7 && <5
-    , buttplug-hs
+    , buttplug-hs-core
     , bytestring
     , connection
     , containers

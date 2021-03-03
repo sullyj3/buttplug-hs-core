@@ -1,6 +1,6 @@
-name:                buttplug-hs
+name:                buttplug-hs-core
 version:             0.1.0.0
-github:              "sullyj3/buttplug-hs"
+github:              "sullyj3/buttplug-hs-core"
 license:             BSD3
 author:              "James Sully"
 maintainer:          "sullyj3@gmail.com"
@@ -17,7 +17,7 @@ extra-source-files:
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://github.com/sullyj3/buttplug-hs#readme>
+description:         Please see the README on GitHub at <https://github.com/sullyj3/buttplug-hs-core#readme>
 
 dependencies:
 - base >= 4.7 && < 5
@@ -38,7 +38,7 @@ library:
   source-dirs: src
 
 executables:
-  buttplug-hs-exe:
+  buttplug-hs-core-exe:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
@@ -46,7 +46,7 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - buttplug-hs
+    - buttplug-hs-core
   example-1:
     main: example1.hs
     source-dirs: examples
@@ -55,7 +55,7 @@ executables:
     source-dirs: examples
 
 tests:
-  buttplug-hs-test:
+  buttplug-hs-core-test:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:
@@ -64,7 +64,7 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - hspec
-    - buttplug-hs
+    - buttplug-hs-core
     - aeson-pretty
     - QuickCheck
     - quickcheck-instances
