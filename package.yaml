@@ -27,7 +27,6 @@ dependencies:
 - async
 - bytestring
 - connection
-- hspec
 - network
 - text
 - containers
@@ -58,6 +57,7 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
+    - hspec
     - buttplug-hs
     - aeson-pretty
     - QuickCheck
