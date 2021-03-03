@@ -60,4 +60,8 @@ tests:
     dependencies:
     - buttplug-hs
     - aeson-pretty
+    - QuickCheck
+    - quickcheck-text
+    - quickcheck-instances
+    - generic-random
     - raw-strings-qq

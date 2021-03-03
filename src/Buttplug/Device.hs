@@ -69,7 +69,6 @@ data DeviceMessageType =
   | VibrateCmd
   | LinearCmd
   | RotateCmd
-
   deriving (Generic, Show, Eq, Ord)
 
 instance ToJSON DeviceMessageType where

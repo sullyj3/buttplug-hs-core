@@ -7,6 +7,12 @@ import           Text.RawString.QQ
 import           GHC.Generics
 import qualified Data.Map.Strict          as Map
 import           Test.Hspec
+import           Test.Hspec.QuickCheck    ( prop )
+import           Test.QuickCheck
+-- todo switch this to use quickcheck-instances instead of quickcheck-text
+import           Data.Text.Arbitrary
+import           Test.QuickCheck.Instances.ByteString
+import           Generic.Random           ( genericArbitraryU )
 import           Data.Aeson               ( decode
                                           , eitherDecode
                                           , encode
@@ -19,18 +25,48 @@ import           Data.Aeson               ( decode
                                           )
 import           Data.Aeson.Encode.Pretty ( encodePretty )
 import qualified Data.Text                as T
-import           Data.Text.Encoding       (decodeUtf8)
+import           Data.Text.Encoding       ( decodeUtf8 )
 import qualified Data.Text.IO             as T
 import           Data.Maybe (isJust)
-import           Data.ByteString          (ByteString)
+import           Data.ByteString          ( ByteString )
 import qualified Data.ByteString          as BS
-import           Data.ByteString.Lazy     (toStrict)
-import           Data.Word                    ( Word8 )
+import           Data.ByteString.Lazy     ( toStrict )
+import           Data.Word                ( Word8 )
 
 import           Buttplug.Message
-import           Buttplug.Device (Device(..), MessageAttributes(..))
+import           Buttplug.Device ( Device(..)
+                                 , MessageAttributes(..))
 import qualified Buttplug.Device as Dev
 import           Buttplug.Internal.JSONUtils
+
+instance Arbitrary RawData where
+  arbitrary = genericArbitraryU
+  shrink = genericShrink
+instance Arbitrary Dev.MessageAttributes where
+  arbitrary = genericArbitraryU
+  shrink = genericShrink
+instance Arbitrary Dev.DeviceMessageType where
+  arbitrary = genericArbitraryU
+  shrink = genericShrink
+instance Arbitrary Device where
+  arbitrary = genericArbitraryU
+  shrink = genericShrink
+instance Arbitrary ErrorCode where
+  arbitrary = genericArbitraryU
+  shrink = genericShrink
+instance Arbitrary Vibrate where
+  arbitrary = genericArbitraryU
+  shrink = genericShrink
+instance Arbitrary LinearActuate where
+  arbitrary = genericArbitraryU
+  shrink = genericShrink
+instance Arbitrary Rotate where
+  arbitrary = genericArbitraryU
+  shrink = genericShrink
+
+instance Arbitrary Message where
+  arbitrary = genericArbitraryU
+  shrink = genericShrink
 
 main :: IO ()
 main = hspec do
@@ -457,5 +493,11 @@ testButtplug = do
       it "Can encode it" do
         decode (encode msg) `shouldBe` Just msg
 
+    describe "all messages" do
+      prop "decode is inverse to encode" decodeEncodeInverse
+      where
+        decodeEncodeInverse :: Message -> Expectation
+        decodeEncodeInverse msg = 
+          (decode . encode $ msg) `shouldBe` Just msg
     -- TODO
     -- - quickcheck that decode . encode = id

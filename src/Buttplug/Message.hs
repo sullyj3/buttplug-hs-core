@@ -34,7 +34,7 @@ data ErrorCode = ERROR_UNKNOWN
                | ERROR_PING
                | ERROR_MSG
                | ERROR_DEVICE
-               deriving (Enum, Show, Eq)
+               deriving (Enum, Show, Eq, Generic)
 
 
 errCodeFromInt :: Int -> Maybe ErrorCode
