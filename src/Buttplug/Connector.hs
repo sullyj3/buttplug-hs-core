@@ -110,6 +110,10 @@ instance Connector WebSocketConnector where
               WS.runClientWithStream stream host "/" options headers client
             else Wuss.runSecureClient host port "/" client
 
+--         --
+-- Private --
+--         --
+
 handleWSConnFailed :: WS.HandshakeException -> IO a
 handleWSConnFailed e = throwIO (ConnectionFailed $ show e)
 

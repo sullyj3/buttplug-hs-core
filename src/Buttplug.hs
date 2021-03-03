@@ -13,7 +13,14 @@ module Buttplug
   , isDeviceList
 
   -- Connector.hs
-  , module Buttplug.Connector 
+  , Connector
+  , Connection
+  , sendMessages
+  , receiveMsgs
+  , runClient
+  , sendMessage
+  , WebSocketConnector(..)
+  , ConnectorException(..)
   -- Device.hs
 
   ) where
