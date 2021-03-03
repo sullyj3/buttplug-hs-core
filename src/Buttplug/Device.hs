@@ -32,7 +32,6 @@ data MessageAttributes = MessageAttributes
   deriving (Generic, Show, Eq)
 
 
--- TODO test these
 instance ToJSON MessageAttributes where
   toJSON = genericToJSON msgAttributeOptions
 

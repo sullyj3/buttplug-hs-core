@@ -9,7 +9,6 @@ import qualified Data.Map.Strict          as Map
 import           Test.Hspec
 import           Test.Hspec.QuickCheck    ( prop )
 import           Test.QuickCheck
--- todo switch this to use quickcheck-instances instead of quickcheck-text
 import           Test.QuickCheck.Instances.ByteString
 import           Test.QuickCheck.Instances.Text
 import           Generic.Random           ( genericArbitraryU )
@@ -497,5 +496,3 @@ testButtplug = do
         decodeEncodeInverse :: Message -> Expectation
         decodeEncodeInverse msg = 
           (decode . encode $ msg) `shouldBe` Just msg
-    -- TODO
-    -- - quickcheck that decode . encode = id
