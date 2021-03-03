@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: bdcbd41fded48c5eb734022f8ce1690eedc11b5552d0ea88ea12cf976190c9e9
+-- hash: 1de6def7a79631b03b965c258d29d5659ad905f87035d9cc2e50ba60ea415aa9
 
 name:           buttplug-hs
 version:        0.1.0.0
@@ -97,7 +97,6 @@ test-suite buttplug-hs-test
     , hspec
     , network
     , quickcheck-instances
-    , quickcheck-text
     , raw-strings-qq
     , text
     , unordered-containers

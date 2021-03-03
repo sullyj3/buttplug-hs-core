@@ -10,8 +10,8 @@ import           Test.Hspec
 import           Test.Hspec.QuickCheck    ( prop )
 import           Test.QuickCheck
 -- todo switch this to use quickcheck-instances instead of quickcheck-text
-import           Data.Text.Arbitrary
 import           Test.QuickCheck.Instances.ByteString
+import           Test.QuickCheck.Instances.Text
 import           Generic.Random           ( genericArbitraryU )
 import           Data.Aeson               ( decode
                                           , eitherDecode
