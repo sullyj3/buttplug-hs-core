@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 1de6def7a79631b03b965c258d29d5659ad905f87035d9cc2e50ba60ea415aa9
+-- hash: f9a8a07509e1dcabe5b9164dba1d6935c2e8d733f3f9625daffc08e4ae3eacca
 
 name:           buttplug-hs
 version:        0.1.0.0
@@ -64,6 +64,48 @@ executable buttplug-hs-exe
     , async
     , base >=4.7 && <5
     , buttplug-hs
+    , bytestring
+    , connection
+    , containers
+    , network
+    , text
+    , unordered-containers
+    , websockets
+    , wuss
+  default-language: Haskell2010
+
+executable example-1
+  main-is: example1.hs
+  other-modules:
+      Paths_buttplug_hs
+  hs-source-dirs:
+      examples
+  build-depends:
+      aeson
+    , aeson-casing
+    , async
+    , base >=4.7 && <5
+    , bytestring
+    , connection
+    , containers
+    , network
+    , text
+    , unordered-containers
+    , websockets
+    , wuss
+  default-language: Haskell2010
+
+executable example-2
+  main-is: example2.hs
+  other-modules:
+      Paths_buttplug_hs
+  hs-source-dirs:
+      examples
+  build-depends:
+      aeson
+    , aeson-casing
+    , async
+    , base >=4.7 && <5
     , bytestring
     , connection
     , containers
