@@ -67,8 +67,6 @@ instance FromJSON ErrorCode where
 clientMessageVersion :: Word
 clientMessageVersion = 2
 
-stripPrefix :: String -> String -> String
-stripPrefix s = drop $ length s
 
 
 ------------------------------------------------
@@ -94,11 +92,11 @@ data Vibrate = Vibrate { vibrateIndex :: Word
 
 
 instance ToJSON Vibrate where
-  toJSON = genericToJSON pascalCaseOptions
+  toJSON = genericToJSON (stripPrefixOptions "vibrate")
 
 
 instance FromJSON Vibrate where
-  parseJSON = genericParseJSON pascalCaseOptions
+  parseJSON = genericParseJSON (stripPrefixOptions "vibrate")
 
 
 ------------------------------------------------

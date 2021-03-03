@@ -34,7 +34,7 @@ data MessageAttributes = MessageAttributes
 
 -- TODO test these
 instance ToJSON MessageAttributes where
-  toJSON = genericToJSON omitNothingOptions
+  toJSON = genericToJSON msgAttributeOptions
 
 instance FromJSON MessageAttributes where
   parseJSON = withObject "MessageAttributes" \v -> MessageAttributes

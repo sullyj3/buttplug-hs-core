@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 8b84dab0c604c34307fbe39e1fd89f6b7b91d70ef1ecee873f647e66d5ab9446
+-- hash: 7b9f6138a55e2e30107051e8a95e6da5ec7c5986afa983ea85781a04c06ba0d6
 
 name:           buttplug-hs
 version:        0.1.0.0
@@ -87,6 +87,7 @@ test-suite buttplug-hs-test
   build-depends:
       aeson
     , aeson-casing
+    , aeson-pretty
     , async
     , base >=4.7 && <5
     , buttplug-hs
@@ -95,6 +96,7 @@ test-suite buttplug-hs-test
     , containers
     , hspec
     , network
+    , raw-strings-qq
     , text
     , unordered-containers
     , websockets
