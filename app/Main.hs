@@ -9,6 +9,7 @@ import qualified Data.Text.IO             as T
 import           Data.Foldable            (for_)
 import           Control.Monad            (forever)
 import           Control.Exception        (handle)
+import           System.Environment       (getArgs)
 import qualified Network.WebSockets       as WS
 import           Control.Concurrent.Async (concurrently_)
 import           Control.Concurrent       (threadDelay)
@@ -18,13 +19,21 @@ import           Buttplug
 
 main :: IO ()
 main = do
+
+  args <- getArgs
+  let (host, port) = case args of
+        [host, port] -> (host, read port)
+        [host]       -> (host, 12345)
+        []           -> ("localhost", 12345)
+        _            -> error "Too many args!"
+
   {- A connector represents a method of connecting to a Buttplug server, and
      contains all of the necessary information required to connect. 
      Connectors for secure and insecure websockets are included in this
      library. You can create your own using the Connector typeclass -}
   let connector =
-        InsecureWebSocketConnector { insecureWSConnectorHost = "localhost"
-                                   , insecureWSConnectorPort = 12345 }
+        InsecureWebSocketConnector { insecureWSConnectorHost = host
+                                   , insecureWSConnectorPort = port }
   let clientName = "Haskell-example-buttplug-client"
 
   {- runClient is responsible for establishing and closing the connection.
