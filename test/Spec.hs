@@ -30,10 +30,10 @@ main = hspec do
 
 testButtplug = do
   describe "decode" do
-    let non_empty_device_list = "[{\"ServerInfo\":{\"MessageVersion\":1,\"MaxPingTime\":0,\"ServerName\":\"Intiface Server\",\"Id\":1}},{\"DeviceList\":{\"Devices\":[{\"DeviceName\":\"Youou Wand Vibrator\",\"DeviceIndex\":1,\"DeviceMessages\":{\"SingleMotorVibrateCmd\":{},\"VibrateCmd\":{\"FeatureCount\":1},\"StopDeviceCmd\":{}}}],\"Id\":1}},{\"Ok\":{\"Id\":1}}]"
+    -- let non_empty_device_list = "[{\"ServerInfo\":{\"MessageVersion\":1,\"MaxPingTime\":0,\"ServerName\":\"Intiface Server\",\"Id\":1}},{\"DeviceList\":{\"Devices\":[{\"DeviceName\":\"Youou Wand Vibrator\",\"DeviceIndex\":1,\"DeviceMessages\":{\"SingleMotorVibrateCmd\":{},\"VibrateCmd\":{\"FeatureCount\":1},\"StopDeviceCmd\":{}}}],\"Id\":1}},{\"Ok\":{\"Id\":1}}]"
 
-    it "Can decode a simple list of messages with a nonempty device list" $
-      (decode non_empty_device_list :: Maybe [Message]) `shouldBe` Just expectedNonemptyDeviceFields
+    -- it "Can decode a simple list of messages with a nonempty device list" $
+    --   (decode non_empty_device_list :: Maybe [Message]) `shouldBe` Just expectedNonemptyDeviceFields
 
     -- should the string instead be "[0, 1, 0]"? Waiting for a reply on discord
     it "Can decode a ByteString" $ do
@@ -47,6 +47,7 @@ testButtplug = do
 
 -- [{"ServerInfo":{"MajorVersion":0,"MinorVersion":5,"BuildVersion":5,"MessageVersion":1,"MaxPingTime":0,"ServerName":"Intiface Server","Id":1}},{"DeviceList":{"Devices":[{"DeviceName":"Youou Wand Vibrator","DeviceIndex":1,"DeviceMessages":{"SingleMotorVibrateCmd":{},"VibrateCmd":{"FeatureCount":1},"StopDeviceCmd":{}}}],"Id":1}},{"Ok":{"Id":1}}]
 
+{-
 expectedNonemptyDeviceFields =
   [ ServerInfo
       { msgMessageVersion = 1
@@ -70,3 +71,4 @@ expectedNonemptyDeviceFields =
   , Ok { msgId = 1 }
   ]
 
+-}
