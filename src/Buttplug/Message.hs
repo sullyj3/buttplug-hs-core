@@ -230,26 +230,3 @@ instance ToJSON Message where
 instance FromJSON Message where
   parseJSON = genericParseJSON $ pascalCaseOptions { sumEncoding = ObjectWithSingleField
                                                    , fieldLabelModifier = stripPrefix "msg" }
-
-
--- messages that we may expect as a response to other messages
-isServerInfo :: Message -> Bool
-isServerInfo = \case
-  ServerInfo {} -> True
-  _             -> False
-
-isOk  :: Message -> Bool
-isOk = \case
-  Ok {} -> True
-  _     -> False
-
-isScanningFinished :: Message -> Bool
-isScanningFinished = \case
-  ScanningFinished {} -> True
-  _                   -> False
-
-isDeviceList :: Message -> Bool
-isDeviceList = \case
-  DeviceList {} -> True
-  _             -> False
-

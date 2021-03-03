@@ -7,10 +7,6 @@ module Buttplug
   , Rotate(..)
   , LinearActuate(..)
   , Message(..)
-  , isServerInfo
-  , isOk
-  , isScanningFinished
-  , isDeviceList
 
   -- Connector.hs
   , Connector
