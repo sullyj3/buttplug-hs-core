@@ -31,7 +31,6 @@ import           Data.Aeson                   ( encode
 import           Buttplug.Message
 
 
--- Connector instances should throw only ConnectorException
 class Connector c where
   type Connection c = conn | conn -> c
   -- the protocol allows sending multiple messages simultaneously, wrapped in a JSON array

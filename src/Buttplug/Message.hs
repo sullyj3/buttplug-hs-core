@@ -1,13 +1,13 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE MultiWayIf #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE OverloadedStrings      #-}
+{-# LANGUAGE MultiWayIf             #-}
+{-# LANGUAGE ScopedTypeVariables    #-}
+{-# LANGUAGE TypeFamilies           #-}
 {-# LANGUAGE TypeFamilyDependencies #-}
-{-# LANGUAGE AllowAmbiguousTypes #-}
-{-# LANGUAGE InstanceSigs #-}
-{-# LANGUAGE BlockArguments #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE AllowAmbiguousTypes    #-}
+{-# LANGUAGE InstanceSigs           #-}
+{-# LANGUAGE BlockArguments         #-}
+{-# LANGUAGE DeriveGeneric          #-}
+{-# LANGUAGE LambdaCase             #-}
 
 module Buttplug.Message where
 
@@ -29,17 +29,20 @@ import           Buttplug.Device              ( Device(..) )
 import           Buttplug.Internal.JSONUtils
 
 
-------------------------------------------------
+-- | The version of the Buttplug message protocol that the client speaks.
+-- (currently version 2)
 clientMessageVersion :: Word
 clientMessageVersion = 2
 ------------------------------------------------
 
 
-data ErrorCode = ERROR_UNKNOWN
-               | ERROR_INIT
-               | ERROR_PING
-               | ERROR_MSG
-               | ERROR_DEVICE
+-- | Errors from the server, used in the Error message.
+-- https://buttplug-spec.docs.buttplug.io/status.html#error
+data ErrorCode = ERROR_UNKNOWN  -- ^ An unknown error occurred. 
+               | ERROR_INIT     -- ^ Handshake did not succeed.
+               | ERROR_PING     -- ^ A ping was not sent in the expected time.
+               | ERROR_MSG      -- ^ A message parsing or permission error occurred.
+               | ERROR_DEVICE   -- ^ A command sent to a device returned an error.
                deriving (Enum, Show, Eq, Generic)
 
 
@@ -131,6 +134,8 @@ instance FromJSON LinearActuate where
   parseJSON = genericParseJSON pascalCaseOptions { fieldLabelModifier = stripPrefix "linAct" }
 
 
+-- TODO technically Ids should be Word32, since the maximum id is 4294967295.
+-- Not sure whether this applies to other unsigned fields, should find out
 ------------------------------------------------
 data Message =
                -- status messages

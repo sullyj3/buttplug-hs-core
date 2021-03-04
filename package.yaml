@@ -47,12 +47,12 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - buttplug-hs-core
-  example-1:
-    main: example1.hs
-    source-dirs: examples
-  example-2:
-    main: example2.hs
-    source-dirs: examples
+    # example-1:
+    #   main: example1.hs
+    #   source-dirs: examples
+    # example-2:
+    #   main: example2.hs
+    #   source-dirs: examples
 
 tests:
   buttplug-hs-core-test:
