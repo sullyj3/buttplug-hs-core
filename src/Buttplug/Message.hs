@@ -9,6 +9,17 @@
 {-# LANGUAGE DeriveGeneric          #-}
 {-# LANGUAGE LambdaCase             #-}
 
+{- |
+Module      : Buttplug.Message
+Copyright   : (c) James Sully, 2020-2021
+License     : BSD 3-Clause
+Maintainer  : sullyj3@gmail.com
+Stability   : experimental
+Portability : untested
+
+Contains the Message type, representing Buttplug protocol messages
+(<https://buttplug-spec.docs.buttplug.io/messages.html>)
+-}
 module Buttplug.Message where
 
 import           GHC.Generics
@@ -37,7 +48,8 @@ clientMessageVersion = 2
 
 
 -- | Errors from the server, used in the Error message.
--- https://buttplug-spec.docs.buttplug.io/status.html#error
+--
+-- (<https://buttplug-spec.docs.buttplug.io/status.html#error>)
 data ErrorCode = ERROR_UNKNOWN  -- ^ An unknown error occurred. 
                | ERROR_INIT     -- ^ Handshake did not succeed.
                | ERROR_PING     -- ^ A ping was not sent in the expected time.
@@ -46,6 +58,8 @@ data ErrorCode = ERROR_UNKNOWN  -- ^ An unknown error occurred.
                deriving (Enum, Show, Eq, Generic)
 
 
+-- TODO these should probably convert with Word not Int
+-- | Parse an 'Int' to an 'ErrorCode'
 errCodeFromInt :: Int -> Maybe ErrorCode
 errCodeFromInt = \case
   0 -> Just ERROR_UNKNOWN
@@ -56,6 +70,7 @@ errCodeFromInt = \case
   _ -> Nothing
 
 
+-- | Convert an 'ErrorCode' to an 'Int'
 fromErrCode :: ErrorCode -> Int
 fromErrCode = fromIntegral . fromEnum
 

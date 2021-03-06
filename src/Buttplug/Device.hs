@@ -58,8 +58,7 @@ instance FromJSON MessageAttributes where
     <$> v .:? "FeatureCount"
     <*> v .:? "StepCount"
 
-
----------------------------------------------------------------
+-- | An intimate device, containing info about the functionality it supports.
 data Device =
        Device { deviceName :: Text
               , deviceIndex :: Word
@@ -74,7 +73,10 @@ instance FromJSON Device where
   parseJSON = genericParseJSON pascalCaseOptions
 ---------------------------------------------------------------
 
--- Represents which message types the device supports
+-- | Represents which message types the device supports
+-- See
+-- (<https://buttplug-spec.docs.buttplug.io/enumeration.html#message-attributes-for-devicelist-and-deviceadded>)
+-- for details.
 data DeviceMessageType =
   -- Raw Device commands
     DevRawWriteCmd

@@ -9,6 +9,16 @@
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE LambdaCase #-}
 
+{- |
+Module      : Buttplug.Connector
+Copyright   : (c) James Sully, 2020-2021
+License     : BSD 3-Clause
+Maintainer  : sullyj3@gmail.com
+Stability   : experimental
+Portability : untested
+
+Provides methods of connecting to a Buttplug Server
+-}
 module Buttplug.Connector where
 
 import           Control.Exception
@@ -31,27 +41,45 @@ import           Data.Aeson                   ( encode
 import           Buttplug.Message
 
 
+-- | Abstracts over methods of connecting to a buttplug server.
 class Connector c where
+
+  -- | Some kind of handle to the connection
   type Connection c = conn | conn -> c
-  -- the protocol allows sending multiple messages simultaneously, wrapped in a JSON array
+
+  -- | Send 'Message's to the server. In the Buttplug protocol, all messages 
+  -- are wrapped in a JSON array (here a Haskell list) to facilitate sending 
+  -- multiple messages simultaneously. Use 'sendMessage' to send a single 
+  -- message.
   sendMessages :: Connection c -> [Message] -> IO ()
 
+  -- | receive 'Message's from the server
+  receiveMsgs :: Connection c -> IO [Message]
 
-  receiveMsgs :: Connection c -> IO [Message] 
-
+  -- | Given a connector containing the necessary information, establish a
+  -- connection to the buttplug server and pass the connection handle to the
+  -- given continuation.
   runClient :: c -> (Connection c -> IO a) -> IO a
 
+-- | Send the server a single 'Message'
 sendMessage :: forall c. Connector c => Connection c -> Message -> IO ()
 sendMessage conn msg = sendMessages @c conn [msg]
 
-data WebSocketConnector = InsecureWebSocketConnector { insecureWSConnectorHost :: String
-                                                     , insecureWSConnectorPort :: Int }
-                        | SecureWebSocketConnector { secureWSConnectorHost :: String
-                                                   , secureWSConnectorPort :: PortNumber
-                                                   , secureWSBypassCertVerify :: Bool }
+-- | Connect to the buttplug server using websockets
+data WebSocketConnector =
+    InsecureWebSocketConnector { insecureWSConnectorHost :: String
+                               , insecureWSConnectorPort :: Int }
+  | SecureWebSocketConnector { secureWSConnectorHost :: String
+                             , secureWSConnectorPort :: PortNumber
+                             , secureWSBypassCertVerify :: Bool }
 
 -- I'm not incredibly psyched about this design, but it's not immediately
 -- obvious to me how to improve it.
+
+-- | An exception type abstracting over the exceptions that might arise in the
+-- course of communication with the buttplug server. 'Connector' instances in
+-- general should throw these rather than Exceptions specific to the connection
+-- type.
 data ConnectorException = ConnectionFailed String
                         | UnexpectedConnectionClosed
                         | ConnectionClosedNormally
@@ -61,8 +89,6 @@ data ConnectorException = ConnectionFailed String
 
 instance Exception ConnectorException
 
-
---------------------
 
 instance Connector WebSocketConnector where
   type Connection WebSocketConnector = WS.Connection
@@ -113,14 +139,17 @@ instance Connector WebSocketConnector where
 -- Private --
 --         --
 
+-- | Convert 'WS.HandshakeException' into 'ConnectionFailed'
 handleWSConnFailed :: WS.HandshakeException -> IO a
 handleWSConnFailed e = throwIO (ConnectionFailed $ show e)
 
+-- | Convert socket connection issues into 'ConnectionFailed'
 handleSockConnFailed :: IOError -> IO a
 handleSockConnFailed e
   | isDoesNotExistError e = throwIO (ConnectionFailed $ show e)
   | otherwise             = throwIO e
 
+-- | Convert websocket specific connection exceptions into 'ConnectorException'
 handleWSConnException :: WS.ConnectionException -> IO a
 handleWSConnException = \case
   WS.ConnectionClosed    -> throwIO UnexpectedConnectionClosed
