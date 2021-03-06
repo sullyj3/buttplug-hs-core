@@ -17,7 +17,8 @@ extra-source-files:
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://github.com/sullyj3/buttplug-hs-core#readme>
+description: Library for writing clients for the Buttplug Intimate Device Control Standard. (<https://buttplug.io/>)
+
 
 dependencies:
 - base >= 4.7 && < 5

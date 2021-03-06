@@ -1,9 +1,16 @@
--- |
--- Module: Buttplug.Core
--- TODO
---
--- An implementation of the Buttplug Intimate Device Control Standard 
--- (<https://buttplug.io/>)
+{- |
+Module      : Buttplug
+Description : Core functionality for <https://buttplug.io/> clients.
+Copyright   : (c) James Sully, 2020-2021
+License     : BSD 3-Clause
+Maintainer  : sullyj3@gmail.com
+Stability   : experimental
+Portability : untested
+
+An implementation of the Buttplug Intimate Device Control Standard
+(<https://buttplug.io/>)
+-}
+
 module Buttplug
   (
     -- * Overview

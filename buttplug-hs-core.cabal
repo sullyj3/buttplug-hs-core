@@ -4,11 +4,11 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 3ae7cf681e5ab32eaf52867d6d7e4c1770844f37f1fe489becf98e701d526ccf
+-- hash: f0cc96f1e22ec608f9a63e43690a5bc8c8cd4c6915c216368766c0da7b332908
 
 name:           buttplug-hs-core
 version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/sullyj3/buttplug-hs-core#readme>
+description:    Library for writing clients for the Buttplug Intimate Device Control Standard. (<https://buttplug.io/>)
 homepage:       https://github.com/sullyj3/buttplug-hs-core#readme
 bug-reports:    https://github.com/sullyj3/buttplug-hs-core/issues
 author:         James Sully
