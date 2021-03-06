@@ -1,6 +1,19 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE DeriveGeneric #-}
+
+{- |
+Module      : Buttplug.Device
+Description : Types for representing sex toys
+Copyright   : (c) James Sully, 2020-2021
+License     : BSD 3-Clause
+Maintainer  : sullyj3@gmail.com
+Stability   : experimental
+Portability : untested
+
+Types for representing sex toys, as well as ways of actuating them.
+-}
+
 module Buttplug.Device where
 
 import           GHC.Generics
@@ -26,6 +39,11 @@ import qualified Data.HashMap.Strict as HMap
 
 import Buttplug.Internal.JSONUtils
 
+-- | For a particular actuation feature (Vibration, Rotation, or Linear), 
+-- represents how many of that feature the device has, and the available 
+-- resolution of control of that feature. See
+-- (<https://buttplug-spec.docs.buttplug.io/enumeration.html#message-attributes-for-devicelist-and-deviceadded>)
+-- for details.
 data MessageAttributes = MessageAttributes
        { attrFeatureCount :: Maybe Word
        , attrStepCount :: Maybe [Word] }

@@ -71,9 +71,10 @@ instance FromJSON ErrorCode where
       Nothing -> fail "Error code should be an int"
       Just e -> pure e
 
-------------------------------------------------
--- used for the various Raw* commands. Circumvents the fact that Aeson doesn't 
+-- Circumvents the fact that Aeson doesn't
 -- have bytestring encoding/decoding in genericToJSON and genericParseJSON
+
+-- | Used for the Raw* messages.
 newtype RawData = RawData ByteString
   deriving (Generic, Show, Eq)
 
@@ -85,8 +86,7 @@ instance ToJSON RawData where
 instance FromJSON RawData where
   parseJSON j = RawData . BS.pack <$> parseJSON j
 
-------------------------------------------------
--- Used in VibrateCmd to specify the speed of the motor at the given index
+-- | Used in VibrateCmd to specify the speed of the motor at the given index
 data Vibrate = Vibrate { vibrateIndex :: Word
                        , vibrateSpeed :: Double
                        }
@@ -101,7 +101,8 @@ instance FromJSON Vibrate where
   parseJSON = genericParseJSON (stripPrefixOptions "vibrate")
 
 
-------------------------------------------------
+-- | Used in RotateCmd to specify the speed and direction of rotation of the
+-- motor at the given index
 data Rotate = Rotate
   { rotateIndex :: Word
   , rotateSpeed :: Double
@@ -117,7 +118,8 @@ instance FromJSON Rotate where
   parseJSON = genericParseJSON pascalCaseOptions { fieldLabelModifier = stripPrefix "rotate" }
 
 
-------------------------------------------------
+-- | Used in LinearCmd to specify how to move the linear actuator at the given
+-- index
 data LinearActuate = LinearActuate
   { linActIndex :: Word
   , linActDuration :: Word
@@ -136,7 +138,10 @@ instance FromJSON LinearActuate where
 
 -- TODO technically Ids should be Word32, since the maximum id is 4294967295.
 -- Not sure whether this applies to other unsigned fields, should find out
-------------------------------------------------
+
+-- | The type of Buttplug protocol messages. See
+-- (<https://buttplug-spec.docs.buttplug.io/messages.html>) for the protocol
+-- specification and an explanation of the purpose of each message.
 data Message =
                -- status messages
                Ok { msgId :: Word }
