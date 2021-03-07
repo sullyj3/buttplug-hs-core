@@ -92,17 +92,18 @@ instance Exception ConnectorException
 instance Connector WebSocketConnector where
   type Connection WebSocketConnector = WS.Connection
 
-  sendMessages :: Connection WebSocketConnector -> [Message] -> IO ()
+  sendMessages :: WS.Connection -> [Message] -> IO ()
   sendMessages wsCon msgs = handle handleWSConnException $
     WS.sendTextData wsCon (encode msgs)
 
-  receiveMsgs :: Connection WebSocketConnector -> IO [Message]
+  receiveMsgs :: WS.Connection -> IO [Message]
   receiveMsgs wsCon = handle handleWSConnException $ do
     received <- WS.receiveData wsCon
     case decode $ fromStrict received :: Maybe [Message] of
       Just msgs -> pure msgs
       Nothing -> throwIO $ InvalidMessage received
 
+  runClient :: WebSocketConnector -> (WS.Connection -> IO a) -> IO a
   runClient connector client =
     handle handleSockConnFailed $ handle handleWSConnFailed $
       withSocketsDo $ case connector of
