@@ -10,7 +10,7 @@
 {-# LANGUAGE LambdaCase #-}
 
 {- |
-Module      : Buttplug.Connector
+Module      : Buttplug.Core.Connector
 Copyright   : (c) James Sully, 2020-2021
 License     : BSD 3-Clause
 Maintainer  : sullyj3@gmail.com
@@ -19,7 +19,7 @@ Portability : untested
 
 Provides methods of connecting to a Buttplug Server
 -}
-module Buttplug.Connector where
+module Buttplug.Core.Connector where
 
 import           Control.Exception
 import           System.IO.Error              ( isDoesNotExistError )
@@ -38,7 +38,7 @@ import           Network.Socket               ( withSocketsDo, PortNumber )
 import           Data.Aeson                   ( encode
                                               , decode )
 
-import           Buttplug.Message
+import           Buttplug.Core.Message
 
 
 -- | Abstracts over methods of connecting to a buttplug server.

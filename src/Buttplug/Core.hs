@@ -1,5 +1,5 @@
 {- |
-Module      : Buttplug
+Module      : Buttplug.Core
 Description : Core functionality for <https://buttplug.io/> clients.
 Copyright   : (c) James Sully, 2020-2021
 License     : BSD 3-Clause
@@ -11,7 +11,7 @@ An implementation of the Buttplug Intimate Device Control Standard
 (<https://buttplug.io/>)
 -}
 
-module Buttplug
+module Buttplug.Core
   (
     -- * Overview
     -- $overview
@@ -44,9 +44,9 @@ module Buttplug
   , DeviceMessageType(..)
   ) where
 
-import Buttplug.Message
-import Buttplug.Connector
-import Buttplug.Device
+import Buttplug.Core.Message
+import Buttplug.Core.Connector
+import Buttplug.Core.Device
 
 -- $overview
 -- See (<https://buttplug.io/documentation/>) for documentation of the Buttplug

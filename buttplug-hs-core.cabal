@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f0cc96f1e22ec608f9a63e43690a5bc8c8cd4c6915c216368766c0da7b332908
+-- hash: b9d55f522ea6e53917c8126e04d1805a95da8d6c99885d9e87ef2418d8d1c531
 
 name:           buttplug-hs-core
 version:        0.1.0.0
@@ -27,11 +27,11 @@ source-repository head
 
 library
   exposed-modules:
-      Buttplug
-      Buttplug.Connector
-      Buttplug.Device
-      Buttplug.Internal.JSONUtils
-      Buttplug.Message
+      Buttplug.Core
+      Buttplug.Core.Connector
+      Buttplug.Core.Device
+      Buttplug.Core.Internal.JSONUtils
+      Buttplug.Core.Message
   other-modules:
       Paths_buttplug_hs_core
   hs-source-dirs:

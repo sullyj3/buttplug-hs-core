@@ -32,9 +32,9 @@ import qualified Data.ByteString          as BS
 import           Data.ByteString.Lazy     ( toStrict )
 import           Data.Word                ( Word8 )
 
-import           Buttplug.Message
-import           Buttplug.Device
-import           Buttplug.Internal.JSONUtils
+import           Buttplug.Core.Message
+import           Buttplug.Core.Device
+import           Buttplug.Core.Internal.JSONUtils
 
 instance Arbitrary RawData where
   arbitrary = genericArbitraryU

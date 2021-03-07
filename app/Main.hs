@@ -14,7 +14,7 @@ import qualified Network.WebSockets       as WS
 import           Control.Concurrent.Async (concurrently_)
 import           Control.Concurrent       (threadDelay)
 
-import           Buttplug
+import           Buttplug.Core
 
 
 main :: IO ()

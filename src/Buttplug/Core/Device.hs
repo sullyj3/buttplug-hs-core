@@ -3,7 +3,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 
 {- |
-Module      : Buttplug.Device
+Module      : Buttplug.Core.Device
 Description : Types for representing sex toys
 Copyright   : (c) James Sully, 2020-2021
 License     : BSD 3-Clause
@@ -14,7 +14,7 @@ Portability : untested
 Types for representing sex toys, as well as ways of actuating them.
 -}
 
-module Buttplug.Device where
+module Buttplug.Core.Device where
 
 import           GHC.Generics
 import           Control.Monad       (foldM)
@@ -37,7 +37,7 @@ import           Data.Aeson          ( ToJSON(..)
                                      , withObject )
 import qualified Data.HashMap.Strict as HMap
 
-import Buttplug.Internal.JSONUtils
+import Buttplug.Core.Internal.JSONUtils
 
 -- | For a particular actuation feature (Vibration, Rotation, or Linear), 
 -- represents how many of that feature the device has, and the available 

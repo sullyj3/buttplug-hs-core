@@ -10,7 +10,7 @@
 {-# LANGUAGE LambdaCase             #-}
 
 {- |
-Module      : Buttplug.Message
+Module      : Buttplug.Core.Message
 Copyright   : (c) James Sully, 2020-2021
 License     : BSD 3-Clause
 Maintainer  : sullyj3@gmail.com
@@ -20,7 +20,7 @@ Portability : untested
 Contains the Message type, representing Buttplug protocol messages
 (<https://buttplug-spec.docs.buttplug.io/messages.html>)
 -}
-module Buttplug.Message where
+module Buttplug.Core.Message where
 
 import           GHC.Generics
 import           Data.Text                    ( Text )
@@ -35,9 +35,9 @@ import           Data.Aeson                   ( ToJSON(..)
                                               )
 import           Data.Map.Strict              ( Map )
 
-import qualified Buttplug.Device              as Dev
-import           Buttplug.Device              ( Device(..) )
-import           Buttplug.Internal.JSONUtils
+import qualified Buttplug.Core.Device              as Dev
+import           Buttplug.Core.Device              ( Device(..) )
+import           Buttplug.Core.Internal.JSONUtils
 
 
 -- | The version of the Buttplug message protocol that the client speaks.
