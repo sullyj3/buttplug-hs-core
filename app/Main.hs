@@ -78,7 +78,7 @@ main = do
       UnexpectedConnectionClosed ->
         putStrLn "Server closed the connection unexpectedly"
       ConnectionClosedNormally -> putStrLn "Server closed the connection"
-      InvalidMessage bs -> do
+      ReceivedInvalidMessage bs -> do
         putStrLn $ "Server sent a message we didn't recognize:"
         print bs
       OtherConnectorError err -> putStrLn $ "Connector error:" ++ err

@@ -84,7 +84,7 @@ data WebSocketConnector =
 data ConnectorException = ConnectionFailed String
                         | UnexpectedConnectionClosed
                         | ConnectionClosedNormally
-                        | InvalidMessage ByteString
+                        | ReceivedInvalidMessage ByteString
                         | OtherConnectorError String
   deriving Show
 
@@ -103,7 +103,7 @@ instance Connector WebSocketConnector where
     received <- WS.receiveData wsCon
     case decode $ fromStrict received :: Maybe [Message] of
       Just msgs -> pure msgs
-      Nothing -> throwIO $ InvalidMessage received
+      Nothing -> throwIO $ ReceivedInvalidMessage received
 
   runClient :: WebSocketConnector -> (WS.Connection -> IO a) -> IO a
   runClient connector client =
