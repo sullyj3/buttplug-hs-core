@@ -4,7 +4,7 @@ github:              "sullyj3/buttplug-hs-core"
 license:             BSD3
 author:              "James Sully"
 maintainer:          "sullyj3@gmail.com"
-copyright:           "2020 James Sully"
+copyright:           "2020-2021 James Sully"
 
 extra-source-files:
 - README.md
@@ -26,7 +26,6 @@ dependencies:
 - aeson
 - aeson-casing
 - async
-- bytestring
 - connection
 - network
 - text

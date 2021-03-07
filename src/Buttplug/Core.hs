@@ -19,24 +19,24 @@ module Buttplug.Core
     -- ** Quickstart
     -- $quickstart
 
+  -- Connector.hs
+    Connector
+  , Connection
+  , runClient
+  , sendMessages
+  , receiveMsgs
+  , sendMessage
+  , ConnectorException(..)
+  , WebSocketConnector(..)
+
     -- Message.hs
-    clientMessageVersion
+  , clientMessageVersion
   , Message(..)
   , ErrorCode(..)
   , Vibrate(..)
   , Rotate(..)
   , LinearActuate(..)
   , RawData(..)
-
-  -- Connector.hs
-  , Connector
-  , Connection
-  , sendMessages
-  , receiveMsgs
-  , runClient
-  , sendMessage
-  , WebSocketConnector(..)
-  , ConnectorException(..)
 
   -- Device.hs
   , MessageAttributes(..)

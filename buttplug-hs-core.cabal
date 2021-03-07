@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: b9d55f522ea6e53917c8126e04d1805a95da8d6c99885d9e87ef2418d8d1c531
+-- hash: 3c278c86157af8da43fc89ed584b26ff720a388946a7eb057060258dbbe92593
 
 name:           buttplug-hs-core
 version:        0.1.0.0
@@ -13,7 +13,7 @@ homepage:       https://github.com/sullyj3/buttplug-hs-core#readme
 bug-reports:    https://github.com/sullyj3/buttplug-hs-core/issues
 author:         James Sully
 maintainer:     sullyj3@gmail.com
-copyright:      2020 James Sully
+copyright:      2020-2021 James Sully
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple

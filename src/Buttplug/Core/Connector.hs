@@ -43,9 +43,13 @@ import           Buttplug.Core.Message
 
 -- | Abstracts over methods of connecting to a buttplug server.
 class Connector c where
-
   -- | Some kind of handle to the connection
   type Connection c = conn | conn -> c
+
+  -- | Main entry point for communicating with the Buttplug server. Establish a
+  -- connection to the server and pass the connection handle to the 
+  -- continuation.
+  runClient :: c -> (Connection c -> IO a) -> IO a
 
   -- | Send 'Message's to the server. In the Buttplug protocol, all messages 
   -- are wrapped in a JSON array (here a Haskell list) to facilitate sending 
@@ -55,11 +59,6 @@ class Connector c where
 
   -- | receive 'Message's from the server
   receiveMsgs :: Connection c -> IO [Message]
-
-  -- | Given a connector containing the necessary information, establish a
-  -- connection to the buttplug server and pass the connection handle to the
-  -- given continuation.
-  runClient :: c -> (Connection c -> IO a) -> IO a
 
 -- | Send the server a single 'Message'
 sendMessage :: forall c. Connector c => Connection c -> Message -> IO ()
