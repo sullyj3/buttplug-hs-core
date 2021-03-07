@@ -41,9 +41,11 @@ import           Data.Aeson                   ( encode
 import           Buttplug.Core.Message
 
 
--- | Abstracts over methods of connecting to a buttplug server.
+-- | Abstracts over methods of connecting to a buttplug server. The connector 
+-- contains all the information necessary for establishing a connection.
 class Connector c where
-  -- | Some kind of handle to the connection
+  -- | A Connector determines a unique connection type that is used for 
+  -- communication.
   type Connection c = conn | conn -> c
 
   -- | Main entry point for communicating with the Buttplug server. Establish a
@@ -112,6 +114,7 @@ instance Connector WebSocketConnector where
         SecureWebSocketConnector host port bypassCertVerify ->
           if bypassCertVerify
             then do
+              -- adapted from https://hackage.haskell.org/package/wuss-1.1.18/docs/Wuss.html#v:runSecureClientWith
               let options = WS.defaultConnectionOptions
               let headers = []
               let tlsSettings = TLSSettingsSimple
