@@ -40,6 +40,9 @@ import           Data.Aeson                   ( encode
 
 import           Buttplug.Core.Message
 
+-- TODO currently websocket connector runclient blocks indefinitely if host
+-- exists but port is unavailable. Need to think about providing an API to
+-- allow for time limits
 
 -- | Abstracts over methods of connecting to a buttplug server. The connector 
 -- contains all the information necessary for establishing a connection.
