@@ -16,8 +16,8 @@ module Buttplug.Core
     -- * Overview
     -- $overview
 
-    -- ** Quickstart
-    -- $quickstart
+    -- ** Tutorial
+    -- $tutorial
 
   -- Connector.hs
     Connector
@@ -78,11 +78,7 @@ import Buttplug.Core.Device
 --
 -- - 'WebSocketConnector', for connecting to a Buttplug server using Websockets.
 
--- $quickstart
--- Here is a simple example of a client which connects to a server, performs a handshake, and exits:
+-- $tutorial
+-- See (<https://github.com/sullyj3/buttplug-hs-core/blob/main/examples/example.lhs>) for a basic tutorial.
 --
--- > main = error "TODO"
---
--- See the examples directory for more example programs.
---
--- As this library is still experimental, please feel free to suggets API improvements!
+-- As this library is still experimental, please feel free to suggest API improvements!

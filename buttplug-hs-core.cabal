@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 3c278c86157af8da43fc89ed584b26ff720a388946a7eb057060258dbbe92593
+-- hash: 1d564b3ed3472b16e4c537acae28753bbccb730dc6ae36030671828d385f082b
 
 name:           buttplug-hs-core
 version:        0.1.0.0
@@ -39,7 +39,6 @@ library
   build-depends:
       aeson
     , aeson-casing
-    , async
     , base >=4.7 && <5
     , bytestring
     , connection
@@ -51,12 +50,12 @@ library
     , wuss
   default-language: Haskell2010
 
-executable buttplug-hs-core-exe
-  main-is: Main.hs
+executable buttplug-example
+  main-is: example.lhs
   other-modules:
       Paths_buttplug_hs_core
   hs-source-dirs:
-      app
+      examples
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
@@ -87,7 +86,6 @@ test-suite buttplug-hs-core-test
     , aeson
     , aeson-casing
     , aeson-pretty
-    , async
     , base >=4.7 && <5
     , buttplug-hs-core
     , bytestring

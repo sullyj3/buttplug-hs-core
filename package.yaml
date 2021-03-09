@@ -25,7 +25,6 @@ dependencies:
 - bytestring
 - aeson
 - aeson-casing
-- async
 - connection
 - network
 - text
@@ -38,21 +37,16 @@ library:
   source-dirs: src
 
 executables:
-  buttplug-hs-core-exe:
-    main:                Main.hs
-    source-dirs:         app
+  buttplug-example:
+    main:                example.lhs
+    source-dirs:         examples
     ghc-options:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
     - buttplug-hs-core
-    # example-1:
-    #   main: example1.hs
-    #   source-dirs: examples
-    # example-2:
-    #   main: example2.hs
-    #   source-dirs: examples
+    - async
 
 tests:
   buttplug-hs-core-test:
