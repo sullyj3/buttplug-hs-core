@@ -84,3 +84,5 @@ import Buttplug.Core.Device
 -- > main = error "TODO"
 --
 -- See the examples directory for more example programs.
+--
+-- As this library is still experimental, please feel free to suggets API improvements!
