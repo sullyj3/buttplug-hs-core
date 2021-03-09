@@ -77,7 +77,7 @@ testButtplug = do
                 "Id": 1
                   }
                 }|]
-          msg = Ok 1
+          msg = MsgOk 1
       it "Can decode it" do
         decode s `shouldBe` Just msg
       it "Can encode it" do
@@ -91,7 +91,7 @@ testButtplug = do
                 "ErrorCode": 3
                 }
               }|]
-          msg = Error 0 "Server received invalid JSON." ERROR_MSG
+          msg = MsgError 0 "Server received invalid JSON." ERROR_MSG
       it "Can decode it" do
         decode s `shouldBe` Just msg
       it "Can encode it" do
@@ -103,7 +103,7 @@ testButtplug = do
                     "Id": 5
                   }
                 }|]
-          msg = Ping 5
+          msg = MsgPing 5
       it "Can decode it" do
         decode s `shouldBe` Just msg
       it "Can encode it" do
@@ -117,7 +117,7 @@ testButtplug = do
                       "MessageVersion": 1
                     }
                   }|]
-          msg = RequestServerInfo 1 "Test Client" 1
+          msg = MsgRequestServerInfo 1 "Test Client" 1
       it "Can decode it" do
         decode s `shouldBe` Just msg
       it "Can encode it" do
@@ -133,7 +133,7 @@ testButtplug = do
                     "MaxPingTime": 100
                   }
                 }|]
-          msg = ServerInfo 1 "Test Server" 1 100
+          msg = MsgServerInfo 1 "Test Server" 1 100
       it "Can decode it" do
         decode s `shouldBe` Just msg
       it "Can encode it" do
@@ -145,7 +145,7 @@ testButtplug = do
                       "Id": 1
                     }
                   }|]
-          msg = StartScanning 1
+          msg = MsgStartScanning 1
       it "Can decode it" do
         decode s `shouldBe` Just msg
       it "Can encode it" do
@@ -157,7 +157,7 @@ testButtplug = do
                       "Id": 1
                     }
                   }|]
-          msg = StopScanning 1
+          msg = MsgStopScanning 1
       it "Can decode it" do
         decode s `shouldBe` Just msg
       it "Can encode it" do
@@ -169,7 +169,7 @@ testButtplug = do
                       "Id": 0
                     }
                   }|]
-          msg = ScanningFinished 0
+          msg = MsgScanningFinished 0
       it "Can decode it" do
         decode s `shouldBe` Just msg
       it "Can encode it" do
@@ -181,7 +181,7 @@ testButtplug = do
                       "Id": 1
                     }
                   }|]
-          msg = RequestDeviceList 1
+          msg = MsgRequestDeviceList 1
       it "Can decode it" do
         decode s `shouldBe` Just msg
       it "Can encode it" do
@@ -212,7 +212,7 @@ testButtplug = do
                     }
                   }|]
           msg =
-            DeviceList 1
+            MsgDeviceList 1
               [ Device "TestDevice 1" 0 $ Map.fromList
                   [ (DevVibrateCmd, MessageAttributes (Just 2) Nothing)
                   , (DevStopDeviceCmd, MessageAttributes Nothing Nothing )]
@@ -237,7 +237,7 @@ testButtplug = do
                       }
                     }
                   }|]
-          msg = DeviceAdded 0 "TestDevice 1" 0 $ Map.fromList
+          msg = MsgDeviceAdded 0 "TestDevice 1" 0 $ Map.fromList
             [ (DevVibrateCmd, MessageAttributes (Just 2) Nothing)
             , (DevStopDeviceCmd, MessageAttributes Nothing Nothing )]
       it "Can decode it" do
@@ -252,7 +252,7 @@ testButtplug = do
                       "DeviceIndex": 0
                     }
                   }|]
-          msg = DeviceRemoved 0 0
+          msg = MsgDeviceRemoved 0 0
       it "Can decode it" do
         decode s `shouldBe` Just msg
       it "Can encode it" do
@@ -271,7 +271,7 @@ testButtplug = do
                       "WriteWithResponse": false
                     }
                   }|]
-          msg = RawWriteCmd 1 0 "tx" (RawData $ BS.pack [0,1,0]) False
+          msg = MsgRawWriteCmd 1 0 "tx" (RawData $ BS.pack [0,1,0]) False
       it "Can decode it" do
         decode s `shouldBe` Just msg
       it "Can encode it" do
@@ -287,7 +287,7 @@ testButtplug = do
                       "WaitForData": false
                     }
                   }|]
-          msg = RawReadCmd 1 0 "tx" 0 False
+          msg = MsgRawReadCmd 1 0 "tx" 0 False
       it "Can decode it" do
         decode s `shouldBe` Just msg
       it "Can encode it" do
@@ -302,7 +302,7 @@ testButtplug = do
                       "Data": [0, 1, 0]
                     }
                   }|]
-          msg = RawReading 1 0 "rx" (RawData $ BS.pack [0,1,0])
+          msg = MsgRawReading 1 0 "rx" (RawData $ BS.pack [0,1,0])
       it "Can decode it" do
         decode s `shouldBe` Just msg
       it "Can encode it" do
@@ -316,7 +316,7 @@ testButtplug = do
                       "Endpoint": "tx"
                     }
                   }|]
-          msg = RawSubscribeCmd 1 0 "tx"
+          msg = MsgRawSubscribeCmd 1 0 "tx"
       it "Can decode it" do
         decode s `shouldBe` Just msg
       it "Can encode it" do
@@ -330,7 +330,7 @@ testButtplug = do
                       "Endpoint": "tx"
                     }
                   }|]
-          msg = RawUnsubscribeCmd 1 0 "tx"
+          msg = MsgRawUnsubscribeCmd 1 0 "tx"
       it "Can decode it" do
         decode s `shouldBe` Just msg
       it "Can encode it" do
@@ -343,7 +343,7 @@ testButtplug = do
                       "DeviceIndex": 0
                     }
                   }|]
-          msg = StopDeviceCmd 1 0
+          msg = MsgStopDeviceCmd 1 0
       it "Can decode it" do
         decode s `shouldBe` Just msg
       it "Can encode it" do
@@ -355,7 +355,7 @@ testButtplug = do
                       "Id": 1
                     }
                   }|]
-          msg = StopAllDevices 1
+          msg = MsgStopAllDevices 1
       it "Can decode it" do
         decode s `shouldBe` Just msg
       it "Can encode it" do
@@ -378,7 +378,7 @@ testButtplug = do
                       ]
                     }
                   }|]
-          msg = VibrateCmd 1 0 [ Vibrate 0 0.5, Vibrate 1 1.0 ]
+          msg = MsgVibrateCmd 1 0 [ Vibrate 0 0.5, Vibrate 1 1.0 ]
       it "Can decode it" do
         eitherDecode s `shouldBe` Right msg
       it "Can encode it" do
@@ -403,7 +403,7 @@ testButtplug = do
                       ]
                     }
                   }|]
-          msg = LinearCmd 1 0
+          msg = MsgLinearCmd 1 0
             [ LinearActuate 0 500 0.3, LinearActuate 1 1000 0.8 ]
       it "Can decode it" do
         eitherDecode s `shouldBe` Right msg
@@ -429,7 +429,7 @@ testButtplug = do
                       ]
                     }
                   }|]
-          msg = RotateCmd 1 0 
+          msg = MsgRotateCmd 1 0 
             [ Rotate 0 0.5 True, Rotate 1 1.0 False ]
       it "Can decode it" do
         eitherDecode s `shouldBe` Right msg
@@ -443,7 +443,7 @@ testButtplug = do
                       "DeviceIndex": 0
                     }
                   }|]
-          msg = BatteryLevelCmd 1 0
+          msg = MsgBatteryLevelCmd 1 0
       it "Can decode it" do
         eitherDecode s `shouldBe` Right msg
       it "Can encode it" do
@@ -457,7 +457,7 @@ testButtplug = do
                       "BatteryLevel": 0.5
                     }
                   }|]
-          msg = BatteryLevelReading 1 0 0.5
+          msg = MsgBatteryLevelReading 1 0 0.5
       it "Can decode it" do
         eitherDecode s `shouldBe` Right msg
       it "Can encode it" do
@@ -470,7 +470,7 @@ testButtplug = do
                       "DeviceIndex": 0
                     }
                   }|]
-          msg = RSSILevelCmd 1 0
+          msg = MsgRSSILevelCmd 1 0
       it "Can decode it" do
         eitherDecode s `shouldBe` Right msg
       it "Can encode it" do
@@ -484,7 +484,7 @@ testButtplug = do
                       "RSSILevel": -40
                     }
                   }|]
-          msg = RSSILevelReading 1 0 (-40)
+          msg = MsgRSSILevelReading 1 0 (-40)
       it "Can decode it" do
         eitherDecode s `shouldBe` Right msg
       it "Can encode it" do

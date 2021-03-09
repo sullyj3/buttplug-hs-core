@@ -48,21 +48,21 @@ main = do
        See https://buttplug-spec.docs.buttplug.io/architecture.html#stages
        for details and diagrams. -}
     sendMessage con
-      RequestServerInfo { msgId = 1
-                        , msgClientName = clientName
-                        , msgMessageVersion = clientMessageVersion
-                        }
+      MsgRequestServerInfo { msgId = 1
+                           , msgClientName = clientName
+                           , msgMessageVersion = clientMessageVersion
+                           }
 
     -- We receive messages using the receiveMsgs function.
     receiveMsgs con >>= \case
-      [ServerInfo 1 servName msgVersion maxPingTime] -> do
+      [MsgServerInfo 1 servName msgVersion maxPingTime] -> do
         T.putStrLn $ "Successfully connected to server \"" <> servName <> "\"!"
         putStrLn $ "Message version: " <> show msgVersion <>
                    "\nMax ping time (ms): " <> show maxPingTime
         {- Once we have successfully connected to the server, we ask it to
            begin scanning for devices. -}
         putStrLn "Requesting device scan"
-        sendMessage con $ StartScanning 2
+        sendMessage con $ MsgStartScanning 2
 
         concurrently_ (receiveAndPrintMsgs con)
                       (pingServer maxPingTime con)
@@ -102,6 +102,6 @@ main = do
     pingServer maxPingTime con = case maxPingTime of
       0 -> pure ()
       n -> forever do
-        sendMessage con (Ping 1)
+        sendMessage con (MsgPing 1)
         threadDelay $ fromIntegral (n * 1000 `div` 2)
 

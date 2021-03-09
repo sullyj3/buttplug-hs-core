@@ -159,99 +159,101 @@ instance FromJSON LinearActuate where
 -- specification and an explanation of the purpose of each message.
 data Message =
                -- status messages
-               Ok { msgId :: Word }
-             | Error { msgId :: Word
-                     , msgErrorMessage :: Text
-                     , msgErrorCode :: ErrorCode
-                     }
-             | Ping { msgId :: Word }
+               MsgOk { msgId :: Word }
+             | MsgError { msgId :: Word
+                        , msgErrorMessage :: Text
+                        , msgErrorCode :: ErrorCode
+                        }
+             | MsgPing { msgId :: Word }
                -- handshake messages
-             | RequestServerInfo { msgId :: Word
-                                 , msgClientName :: Text
-                                 , msgMessageVersion :: Word
-                                 }
-             | ServerInfo { msgId :: Word
-                          , msgServerName :: Text
-                          , msgMessageVersion :: Word
-                          , msgMaxPingTime :: Word
-                          }
+             | MsgRequestServerInfo { msgId :: Word
+                                    , msgClientName :: Text
+                                    , msgMessageVersion :: Word
+                                    }
+             | MsgServerInfo { msgId :: Word
+                             , msgServerName :: Text
+                             , msgMessageVersion :: Word
+                             , msgMaxPingTime :: Word
+                             }
                -- enumeration messages
-             | StartScanning { msgId :: Word }
-             | StopScanning { msgId :: Word }
-             | ScanningFinished { msgId :: Word }
-             | RequestDeviceList { msgId :: Word }
-             | DeviceList { msgId :: Word
-                          , msgDevices :: [ Device ]
-                          }
-             | DeviceAdded { msgId :: Word
-                           , msgDeviceName :: Text
-                           , msgDeviceIndex :: Word
-                           , msgDeviceMessages :: Map Dev.DeviceMessageType Dev.MessageAttributes
-                           }
-             | DeviceRemoved { msgId :: Word
-                             , msgDeviceIndex :: Word
+             | MsgStartScanning { msgId :: Word }
+             | MsgStopScanning { msgId :: Word }
+             | MsgScanningFinished { msgId :: Word }
+             | MsgRequestDeviceList { msgId :: Word }
+             | MsgDeviceList { msgId :: Word
+                             , msgDevices :: [ Device ]
                              }
+             | MsgDeviceAdded { msgId :: Word
+                              , msgDeviceName :: Text
+                              , msgDeviceIndex :: Word
+                              , msgDeviceMessages :: Map Dev.DeviceMessageType Dev.MessageAttributes
+                              }
+             | MsgDeviceRemoved { msgId :: Word
+                                , msgDeviceIndex :: Word
+                                }
                -- raw device messages
-             | RawWriteCmd { msgId :: Word
-                           , msgDeviceIndex :: Word
-                           , msgEndpoint :: Text
-                           , msgData :: RawData
-                           , msgWriteWithResponse :: Bool }
-             | RawReadCmd { msgId :: Word
-                          , msgDeviceIndex :: Word
-                          , msgEndpoint :: Text
-                          , msgExpectedLength :: Word
-                          , msgWaitForData :: Bool }
-             | RawReading { msgId :: Word
-                          , msgDeviceIndex :: Word
-                          , msgEndpoint :: Text
-                          , msgData :: RawData }
-             | RawSubscribeCmd { msgId :: Word
-                               , msgDeviceIndex :: Word
-                               , msgEndpoint :: Text }
-             | RawUnsubscribeCmd { msgId :: Word
-                                 , msgDeviceIndex :: Word
-                                 , msgEndpoint :: Text }
-               -- generic device messages
-             | StopDeviceCmd { msgId :: Word
+             | MsgRawWriteCmd { msgId :: Word
+                              , msgDeviceIndex :: Word
+                              , msgEndpoint :: Text
+                              , msgData :: RawData
+                              , msgWriteWithResponse :: Bool }
+             | MsgRawReadCmd { msgId :: Word
                              , msgDeviceIndex :: Word
+                             , msgEndpoint :: Text
+                             , msgExpectedLength :: Word
+                             , msgWaitForData :: Bool }
+             | MsgRawReading { msgId :: Word
+                             , msgDeviceIndex :: Word
+                             , msgEndpoint :: Text
+                             , msgData :: RawData }
+             | MsgRawSubscribeCmd { msgId :: Word
+                                  , msgDeviceIndex :: Word
+                                  , msgEndpoint :: Text }
+             | MsgRawUnsubscribeCmd { msgId :: Word
+                                    , msgDeviceIndex :: Word
+                                    , msgEndpoint :: Text }
+               -- generic device messages
+             | MsgStopDeviceCmd { msgId :: Word
+                                , msgDeviceIndex :: Word
+                                }
+             | MsgStopAllDevices { msgId :: Word }
+             | MsgVibrateCmd { msgId :: Word
+                             , msgDeviceIndex :: Word
+                             , msgSpeeds :: [ Vibrate ]
                              }
-             | StopAllDevices { msgId :: Word }
-             | VibrateCmd { msgId :: Word
-                          , msgDeviceIndex :: Word
-                          , msgSpeeds :: [ Vibrate ]
-                          }
-             | LinearCmd { msgId :: Word
-                         , msgDeviceIndex :: Word
-                         , msgVectors :: [ LinearActuate ]
-                         }
-             | RotateCmd { msgId :: Word
-                         , msgDeviceIndex :: Word
-                         , msgRotations :: [ Rotate ]
-                         }
+             | MsgLinearCmd { msgId :: Word
+                            , msgDeviceIndex :: Word
+                            , msgVectors :: [ LinearActuate ]
+                            }
+             | MsgRotateCmd { msgId :: Word
+                            , msgDeviceIndex :: Word
+                            , msgRotations :: [ Rotate ]
+                            }
                -- generic sensor messages
-             | BatteryLevelCmd { msgId :: Word
+             | MsgBatteryLevelCmd { msgId :: Word
+                                  , msgDeviceIndex :: Word
+                                  }
+             | MsgBatteryLevelReading { msgId :: Word
+                                      , msgDeviceIndex :: Word
+                                      , msgBatteryLevel :: Double
+                                      }
+             | MsgRSSILevelCmd { msgId :: Word
                                , msgDeviceIndex :: Word
                                }
-             | BatteryLevelReading { msgId :: Word
+             | MsgRSSILevelReading { msgId :: Word
                                    , msgDeviceIndex :: Word
-                                   , msgBatteryLevel :: Double
+                                   , msgRSSILevel :: Int
                                    }
-             | RSSILevelCmd { msgId :: Word
-                            , msgDeviceIndex :: Word
-                            }
-             | RSSILevelReading { msgId :: Word
-                                , msgDeviceIndex :: Word
-                                , msgRSSILevel :: Int
-                                }
   deriving (Show, Eq, Generic)
 
 
 instance ToJSON Message where
   toJSON = genericToJSON $ pascalCaseOptions { sumEncoding = ObjectWithSingleField
-                                             , fieldLabelModifier = stripPrefix "msg" }
+                                             , fieldLabelModifier = stripPrefix "msg"
+                                             , constructorTagModifier = stripPrefix "Msg" }
 
 
 instance FromJSON Message where
   parseJSON = genericParseJSON $ pascalCaseOptions { sumEncoding = ObjectWithSingleField
-                                                   , fieldLabelModifier = stripPrefix "msg" }
+                                                   , fieldLabelModifier = stripPrefix "msg"
+                                                   , constructorTagModifier = stripPrefix "Msg" }
