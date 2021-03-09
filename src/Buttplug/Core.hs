@@ -19,6 +19,7 @@ module Buttplug.Core
     -- ** Tutorial
     -- $tutorial
 
+    -- ** Connectors and connections
   -- Connector.hs
     Connector
   , Connection
@@ -29,6 +30,7 @@ module Buttplug.Core
   , ConnectorException(..)
   , WebSocketConnector(..)
 
+    -- ** Messages
     -- Message.hs
   , clientMessageVersion
   , Message(..)
@@ -38,6 +40,7 @@ module Buttplug.Core
   , LinearActuate(..)
   , RawData(..)
 
+    -- ** Devices
   -- Device.hs
   , MessageAttributes(..)
   , Device(..)
@@ -77,8 +80,9 @@ import Buttplug.Core.Device
 -- communicating with a Buttplug server. A connector allows the developer to open connections to the Buttplug Server, and send and receive Messages.
 --
 -- - 'WebSocketConnector', for connecting to a Buttplug server using Websockets.
+--
+-- As this library is still experimental, please feel free to suggest API improvements!
 
 -- $tutorial
 -- See (<https://github.com/sullyj3/buttplug-hs-core/blob/main/examples/example.lhs>) for a basic tutorial.
 --
--- As this library is still experimental, please feel free to suggest API improvements!
