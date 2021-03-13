@@ -6,7 +6,7 @@ author:              "James Sully"
 maintainer:          "sullyj3@gmail.com"
 copyright:           "2020-2021 James Sully"
 category:            Hardware
-synopsis:            Client library for (<https://buttplug.io/>)
+synopsis:            Client library for buttplug.io
 
 extra-source-files:
 - README.md
