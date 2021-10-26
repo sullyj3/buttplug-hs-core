@@ -3,10 +3,38 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages: []
+packages:
+- completed:
+    hackage: websockets-0.12.7.2@sha256:5a6a3e40ee0c4e6b2cdc573a332ba4a06bb115b97b58147ed3fb005e3ede5ede,7976
+    pantry-tree:
+      size: 2592
+      sha256: 309daf23348a01f82f0f54af21f5d12927a086e1af95ccc712bd973dab2f3786
+  original:
+    hackage: websockets-0.12.7.2@sha256:5a6a3e40ee0c4e6b2cdc573a332ba4a06bb115b97b58147ed3fb005e3ede5ede,7976
+- completed:
+    hackage: wuss-1.1.18@sha256:3a44849ae19153cedeadda687274d0ad05934477500df1445c6e724e85f1d114,1260
+    pantry-tree:
+      size: 224
+      sha256: ba5ab9057e8030806b0571e0c624dbd517ff68fababb563dfc56cbc2226b99ee
+  original:
+    hackage: wuss-1.1.18@sha256:3a44849ae19153cedeadda687274d0ad05934477500df1445c6e724e85f1d114,1260
+- completed:
+    hackage: attoparsec-0.13.2.5@sha256:7c88195c3f3243c6abe356c1bc872cf40818a8c7b0e261a8f8e6868fe42819a0,6171
+    pantry-tree:
+      size: 5305
+      sha256: d41e1aa0534387e0b2f25ed2e79cae445ec65a442ca1ae1062b3c2acbd4cd6c2
+  original:
+    hackage: attoparsec-0.13.2.5@sha256:7c88195c3f3243c6abe356c1bc872cf40818a8c7b0e261a8f8e6868fe42819a0,6171
+- completed:
+    hackage: aeson-2.0.1.0@sha256:ee0847af4d1fb9ece3f24f443d8d8406431c32688a57880314ac36617da937eb,6229
+    pantry-tree:
+      size: 37910
+      sha256: e7a9eec09f1ea56548b07c7e82b53bf32a974827ffc402d852c667b5f5d89efd
+  original:
+    hackage: aeson-2.0.1.0
 snapshots:
 - completed:
-    size: 567241
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/17/10.yaml
-    sha256: 321b3b9f0c7f76994b39e0dabafdc76478274b4ff74cc5e43d410897a335ad3b
-  original: lts-17.10
+    size: 590066
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2021/10/26.yaml
+    sha256: b81df7ae01a233fdc79a1af11735f12302857088420017eae02bbbccb0e0d7c2
+  original: nightly-2021-10-26

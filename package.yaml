@@ -1,5 +1,5 @@
 name:                buttplug-hs-core
-version:             0.1.0.0
+version:             0.1.0.1
 github:              "sullyj3/buttplug-hs-core"
 license:             BSD3
 author:              "James Sully"
@@ -24,16 +24,16 @@ description: Library for writing clients for the Buttplug Intimate Device Contro
 
 dependencies:
 - base >= 4.7 && < 5
-- bytestring
-- aeson
-- aeson-casing
-- connection
-- network
-- text
-- containers
-- unordered-containers
-- websockets
-- wuss
+- bytestring >= 0.10.12.0 && < 0.11
+- aeson >= 1.5.5.1 && < 2.1
+- aeson-casing >= 0.2.0.0 && < 0.3
+- connection >= 0.3.1 && < 0.4
+- network >= 3.1.1.1 && < 3.2
+- text >= 1.2.4.1 && < 1.3
+- containers >= 0.6.2.1 && < 0.7
+- unordered-containers >= 0.2.13.0 && < 0.3
+- websockets >= 0.12.7.2 && < 0.13
+- wuss >=1.1.18 && <1.2
 
 library:
   source-dirs: src
@@ -48,7 +48,7 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - buttplug-hs-core
-    - async
+    - async >= 1.1.18 && < 2.3
 
 tests:
   buttplug-hs-core-test:
@@ -59,10 +59,10 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - hspec
+    - hspec >= 2.7.8 && < 2.9
     - buttplug-hs-core
-    - aeson-pretty
-    - QuickCheck
-    - quickcheck-instances
-    - generic-random
-    - raw-strings-qq
+    - aeson-pretty >= 0.8.8 && < 0.9
+    - QuickCheck >= 2.14.2 && < 2.15
+    - quickcheck-instances >= 0.3.25.2 && < 0.4
+    - generic-random >= 1.3.0.1 && < 1.6
+    - raw-strings-qq ==1.1.*

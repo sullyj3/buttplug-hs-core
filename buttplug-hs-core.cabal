@@ -1,13 +1,13 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 5ce4c2d20c07e6a90537d50a522631c6c8fc7714452738ca8245fac0db67f361
+-- hash: d9cf51c8ee26899c4bc4ff1455b8f454871e6b11fc0742cfed2a8847e59fb29c
 
 name:           buttplug-hs-core
-version:        0.1.0.0
+version:        0.1.0.1
 synopsis:       Client library for buttplug.io
 description:    Library for writing clients for the Buttplug Intimate Device Control Standard. (<https://buttplug.io/>)
 category:       Hardware
@@ -39,17 +39,17 @@ library
   hs-source-dirs:
       src
   build-depends:
-      aeson
-    , aeson-casing
+      aeson >=1.5.5.1 && <2.1
+    , aeson-casing >=0.2.0.0 && <0.3
     , base >=4.7 && <5
-    , bytestring
-    , connection
-    , containers
-    , network
-    , text
-    , unordered-containers
-    , websockets
-    , wuss
+    , bytestring >=0.10.12.0 && <0.11
+    , connection >=0.3.1 && <0.4
+    , containers >=0.6.2.1 && <0.7
+    , network >=3.1.1.1 && <3.2
+    , text >=1.2.4.1 && <1.3
+    , unordered-containers >=0.2.13.0 && <0.3
+    , websockets >=0.12.7.2 && <0.13
+    , wuss >=1.1.18 && <1.2
   default-language: Haskell2010
 
 executable buttplug-example
@@ -60,19 +60,19 @@ executable buttplug-example
       examples
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      aeson
-    , aeson-casing
-    , async
+      aeson >=1.5.5.1 && <2.1
+    , aeson-casing >=0.2.0.0 && <0.3
+    , async >=1.1.18 && <2.3
     , base >=4.7 && <5
     , buttplug-hs-core
-    , bytestring
-    , connection
-    , containers
-    , network
-    , text
-    , unordered-containers
-    , websockets
-    , wuss
+    , bytestring >=0.10.12.0 && <0.11
+    , connection >=0.3.1 && <0.4
+    , containers >=0.6.2.1 && <0.7
+    , network >=3.1.1.1 && <3.2
+    , text >=1.2.4.1 && <1.3
+    , unordered-containers >=0.2.13.0 && <0.3
+    , websockets >=0.12.7.2 && <0.13
+    , wuss >=1.1.18 && <1.2
   default-language: Haskell2010
 
 test-suite buttplug-hs-core-test
@@ -84,22 +84,22 @@ test-suite buttplug-hs-core-test
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      QuickCheck
-    , aeson
-    , aeson-casing
-    , aeson-pretty
+      QuickCheck >=2.14.2 && <2.15
+    , aeson >=1.5.5.1 && <2.1
+    , aeson-casing >=0.2.0.0 && <0.3
+    , aeson-pretty >=0.8.8 && <0.9
     , base >=4.7 && <5
     , buttplug-hs-core
-    , bytestring
-    , connection
-    , containers
-    , generic-random
-    , hspec
-    , network
-    , quickcheck-instances
-    , raw-strings-qq
-    , text
-    , unordered-containers
-    , websockets
-    , wuss
+    , bytestring >=0.10.12.0 && <0.11
+    , connection >=0.3.1 && <0.4
+    , containers >=0.6.2.1 && <0.7
+    , generic-random >=1.3.0.1 && <1.6
+    , hspec >=2.7.8 && <2.9
+    , network >=3.1.1.1 && <3.2
+    , quickcheck-instances >=0.3.25.2 && <0.4
+    , raw-strings-qq ==1.1.*
+    , text >=1.2.4.1 && <1.3
+    , unordered-containers >=0.2.13.0 && <0.3
+    , websockets >=0.12.7.2 && <0.13
+    , wuss >=1.1.18 && <1.2
   default-language: Haskell2010

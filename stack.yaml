@@ -17,7 +17,7 @@
 #
 # resolver: ./custom-snapshot.yaml
 # resolver: https://example.com/snapshots/2018-01-01.yaml
-resolver: lts-17.10
+resolver: nightly-2021-10-26
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -39,7 +39,12 @@ packages:
 # - git: https://github.com/commercialhaskell/stack.git
 #   commit: e7b331f14bcffb8367cd58fbfc8b40ec7642100a
 #
-# extra-deps: []
+extra-deps:
+  - websockets-0.12.7.2@sha256:5a6a3e40ee0c4e6b2cdc573a332ba4a06bb115b97b58147ed3fb005e3ede5ede,7976
+  - wuss-1.1.18@sha256:3a44849ae19153cedeadda687274d0ad05934477500df1445c6e724e85f1d114,1260
+  - attoparsec-0.13.2.5@sha256:7c88195c3f3243c6abe356c1bc872cf40818a8c7b0e261a8f8e6868fe42819a0,6171
+  - aeson-2.0.1.0
+
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
