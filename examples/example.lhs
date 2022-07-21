@@ -15,10 +15,10 @@
 
 A `Connector` represents a method of connecting to a Buttplug server, and
 contains all of the necessary information required to connect.
-Connectors for secure and insecure websockets are included in this
+A Connector for websockets is included in this
 library. You can create your own using the Connector typeclass.
 
-Here we use an insecure websocket connector. If your server is running
+Here we use a websocket connector. If your server is running
 somewhere other than localhost:12345, you'll need to pass the port and host as
 command line args.
 
@@ -31,8 +31,8 @@ command line args.
 >         []           -> ("localhost", 12345)
 >         _            -> error "Too many args!"
 >       connector =
->         InsecureWebSocketConnector { insecureWSConnectorHost = host
->                                    , insecureWSConnectorPort = port }
+>         WebSocketConnector { wsConnectorHost = host
+>                            , wsConnectorPort = port }
 >       clientName = "Haskell-example-buttplug-client"
 
 `runClient` is responsible for establishing and closing the connection.

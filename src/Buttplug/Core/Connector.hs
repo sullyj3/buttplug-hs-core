@@ -27,7 +27,6 @@ import           Data.ByteString.Lazy         ( fromStrict, toStrict )
 import           Data.ByteString              ( ByteString )
 import qualified Network.WebSockets           as WS
 import           Network.WebSockets.Stream    ( makeStream )
-import qualified Wuss
 import           Network.Connection           ( TLSSettings(..)
                                               , ConnectionParams(..)
                                               , initConnectionContext
@@ -70,12 +69,9 @@ sendMessage :: forall c. Connector c => Connection c -> Message -> IO ()
 sendMessage conn msg = sendMessages @c conn [msg]
 
 -- | Connect to the buttplug server using websockets
-data WebSocketConnector =
-    InsecureWebSocketConnector { insecureWSConnectorHost :: String
-                               , insecureWSConnectorPort :: Int }
-  | SecureWebSocketConnector { secureWSConnectorHost :: String
-                             , secureWSConnectorPort :: PortNumber
-                             , secureWSBypassCertVerify :: Bool }
+data WebSocketConnector = WebSocketConnector 
+  { wsConnectorHost :: String
+  , wsConnectorPort :: Int }
 
 -- I'm not incredibly psyched about this design, but it's not immediately
 -- obvious to me how to improve it.
@@ -109,38 +105,9 @@ instance Connector WebSocketConnector where
       Nothing -> throwIO $ ReceivedInvalidMessage received
 
   runClient :: WebSocketConnector -> (WS.Connection -> IO a) -> IO a
-  runClient connector client =
+  runClient (WebSocketConnector host port) client =
     handle handleSockConnFailed $ handle handleWSConnFailed $
-      withSocketsDo $ case connector of
-        InsecureWebSocketConnector host port ->
-           WS.runClient host port "/" client
-        SecureWebSocketConnector host port bypassCertVerify ->
-          if bypassCertVerify
-            then do
-              -- adapted from https://hackage.haskell.org/package/wuss-1.1.18/docs/Wuss.html#v:runSecureClientWith
-              let options = WS.defaultConnectionOptions
-              let headers = []
-              let tlsSettings = TLSSettingsSimple
-                    -- This is the important setting.
-                    { settingDisableCertificateValidation = True
-                    , settingDisableSession = False
-                    , settingUseServerName = False
-                    }
-              let connectionParams = ConnectionParams
-                    { connectionHostname = host
-                    , connectionPort = port
-                    , connectionUseSecure = Just tlsSettings
-                    , connectionUseSocks = Nothing
-                    }
-
-              context <- initConnectionContext
-              connection <- connectTo context connectionParams
-              stream <- makeStream
-                  (fmap Just (connectionGetChunk connection))
-                  (maybe (return ()) (connectionPut connection . toStrict))
-              WS.runClientWithStream stream host "/" options headers client
-            else Wuss.runSecureClient host port "/" client
-
+      withSocketsDo $ WS.runClient host port "/" client
 --         --
 -- Private --
 --         --

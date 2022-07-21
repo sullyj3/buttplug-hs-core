@@ -1,5 +1,5 @@
 name:                buttplug-hs-core
-version:             0.1.0.1
+version:             0.2.0.1
 github:              "sullyj3/buttplug-hs-core"
 license:             BSD3
 author:              "James Sully"
@@ -33,7 +33,6 @@ dependencies:
 - containers >= 0.6.2.1 && < 0.7
 - unordered-containers >= 0.2.13.0 && < 0.3
 - websockets >= 0.12.7.2 && < 0.13
-- wuss >=1.1.18 && < 2.1
 
 library:
   source-dirs: src
