@@ -14,6 +14,9 @@ Portability : untested
 Provides methods of connecting to a Buttplug Server
 -}
 module Buttplug.Core.Handle where
+-- We export Handle with its constructor exposed to facilitate writing implementations for it
+-- (eg websockets)
+-- A higher level library in the future might reexport it as opaque
 
 import           Data.ByteString              ( ByteString )
 import           Buttplug.Core.Message
