@@ -24,6 +24,9 @@ data Handle = Handle
   { sendMessages :: [Message] -> IO ()
   , receiveMessages :: IO [Message] }
 
+sendMessage :: Handle -> Message -> IO ()
+sendMessage hndl msg = sendMessages hndl [msg]
+
 data ButtplugException = ConnectionFailed String
                        | UnexpectedConnectionClosed
                        | ConnectionClosedNormally
