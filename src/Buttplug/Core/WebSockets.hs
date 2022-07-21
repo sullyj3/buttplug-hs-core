@@ -15,7 +15,7 @@ Provides methods of connecting to a Buttplug Server
 -}
 module Buttplug.Core.WebSockets
   ( runClient
-  , Connector
+  , Connector(..)
   )
 where
 
