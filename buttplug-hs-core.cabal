@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 5a0b26e1835dfdb1b30ea673cc9a3a999af30b7a8908e30f98fd3035860882d5
+-- hash: 7102c5ff86b43443d561275c8f19cb17850a82d7888180a875848a35e1fecc29
 
 name:           buttplug-hs-core
-version:        0.2.0.1
+version:        0.2.0.0
 synopsis:       Client library for buttplug.io
 description:    Library for writing clients for the Buttplug Intimate Device Control Standard. (<https://buttplug.io/>)
 category:       Hardware
