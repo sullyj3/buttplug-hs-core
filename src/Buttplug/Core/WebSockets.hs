@@ -69,4 +69,5 @@ wsHandle wsCon = Handle { sendMessages = sendMessages, receiveMessages = receive
 data Connector = Connector
   { wsConnectorHost :: String
   , wsConnectorPort :: Int }
+  deriving Show
 
