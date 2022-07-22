@@ -65,7 +65,7 @@ wsHandle wsCon = Handle { sendMessages = sendMessages, receiveMessages = receive
         Just msgs -> pure msgs
         Nothing -> throwIO $ ReceivedInvalidMessage received
 
-
+-- TODO maybe use Text instead of String. Be the change and all that
 data Connector = Connector
   { wsConnectorHost :: String
   , wsConnectorPort :: Int }
