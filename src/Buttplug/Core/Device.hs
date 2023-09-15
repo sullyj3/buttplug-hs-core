@@ -35,6 +35,7 @@ import           Data.Aeson          ( ToJSON(..)
                                      , genericFromJSONKey
                                      , genericParseJSON
                                      , withObject )
+import           Data.Word           ( Word32 )
 import qualified Data.HashMap.Strict as HMap
 
 import Buttplug.Core.Internal.JSONUtils
@@ -45,8 +46,8 @@ import Buttplug.Core.Internal.JSONUtils
 -- (<https://buttplug-spec.docs.buttplug.io/enumeration.html#message-attributes-for-devicelist-and-deviceadded>)
 -- for details.
 data MessageAttributes = MessageAttributes
-       { attrFeatureCount :: Maybe Word
-       , attrStepCount :: Maybe [Word] }
+       { attrFeatureCount :: Maybe Word32
+       , attrStepCount :: Maybe [Word32] }
   deriving (Generic, Show, Eq)
 
 
@@ -61,7 +62,7 @@ instance FromJSON MessageAttributes where
 -- | An intimate device, containing info about the functionality it supports.
 data Device =
        Device { deviceName :: Text
-              , deviceIndex :: Word
+              , deviceIndex :: Word32
               , deviceMessages :: Map DeviceMessageType MessageAttributes
               }
   deriving (Generic, Show, Eq)

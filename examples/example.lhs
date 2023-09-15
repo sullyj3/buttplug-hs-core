@@ -10,6 +10,7 @@
 > import qualified Network.WebSockets       as WS
 > import           Control.Concurrent.Async (concurrently_)
 > import           Control.Concurrent       (threadDelay)
+> import           Data.Word                (Word32)
 >
 > import           Buttplug.Core
 
@@ -110,7 +111,7 @@ This case would indicate a server bug, it's just here for completeness.
 
 We ping at twice the specified rate to leave ourselves plenty of room.
 
->    pingServer :: Word -> Connection WebSocketConnector -> IO ()
+>    pingServer :: Word32 -> Connection WebSocketConnector -> IO ()
 >    pingServer maxPingTime con = case maxPingTime of
 >      0 -> pure ()
 >      n -> forever do
