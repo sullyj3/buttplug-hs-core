@@ -23,6 +23,7 @@ Contains the Message type, representing Buttplug protocol messages
 module Buttplug.Core.Message where
 
 import           GHC.Generics
+import           Data.Word                    ( Word32 )
 import           Data.Text                    ( Text )
 import           Data.ByteString              ( ByteString )
 import qualified Data.ByteString              as BS
@@ -42,7 +43,7 @@ import           Buttplug.Core.Internal.JSONUtils
 
 -- | The version of the Buttplug message protocol that the client speaks.
 -- (currently version 2)
-clientMessageVersion :: Word
+clientMessageVersion :: Word32
 clientMessageVersion = 2
 ------------------------------------------------
 
@@ -102,7 +103,7 @@ instance FromJSON RawData where
   parseJSON j = RawData . BS.pack <$> parseJSON j
 
 -- | Used in VibrateCmd to specify the speed of the motor at the given index
-data Vibrate = Vibrate { vibrateIndex :: Word
+data Vibrate = Vibrate { vibrateIndex :: Word32
                        , vibrateSpeed :: Double
                        }
   deriving (Generic, Show, Eq)
@@ -119,7 +120,7 @@ instance FromJSON Vibrate where
 -- | Used in RotateCmd to specify the speed and direction of rotation of the
 -- motor at the given index
 data Rotate = Rotate
-  { rotateIndex :: Word
+  { rotateIndex :: Word32
   , rotateSpeed :: Double
   , rotateClockwise :: Bool
   }
@@ -136,8 +137,8 @@ instance FromJSON Rotate where
 -- | Used in LinearCmd to specify how to move the linear actuator at the given
 -- index
 data LinearActuate = LinearActuate
-  { linActIndex :: Word
-  , linActDuration :: Word
+  { linActIndex :: Word32
+  , linActDuration :: Word32
   , linActPosition :: Double
   }
   deriving (Generic, Show, Eq)
@@ -159,89 +160,89 @@ instance FromJSON LinearActuate where
 -- specification and an explanation of the purpose of each message.
 data Message =
                -- status messages
-               MsgOk { msgId :: Word }
-             | MsgError { msgId :: Word
+               MsgOk { msgId :: Word32 }
+             | MsgError { msgId :: Word32
                         , msgErrorMessage :: Text
                         , msgErrorCode :: ErrorCode
                         }
-             | MsgPing { msgId :: Word }
+             | MsgPing { msgId :: Word32 }
                -- handshake messages
-             | MsgRequestServerInfo { msgId :: Word
+             | MsgRequestServerInfo { msgId :: Word32
                                     , msgClientName :: Text
-                                    , msgMessageVersion :: Word
+                                    , msgMessageVersion :: Word32
                                     }
-             | MsgServerInfo { msgId :: Word
+             | MsgServerInfo { msgId :: Word32
                              , msgServerName :: Text
-                             , msgMessageVersion :: Word
-                             , msgMaxPingTime :: Word
+                             , msgMessageVersion :: Word32
+                             , msgMaxPingTime :: Word32
                              }
                -- enumeration messages
-             | MsgStartScanning { msgId :: Word }
-             | MsgStopScanning { msgId :: Word }
-             | MsgScanningFinished { msgId :: Word }
-             | MsgRequestDeviceList { msgId :: Word }
-             | MsgDeviceList { msgId :: Word
+             | MsgStartScanning { msgId :: Word32 }
+             | MsgStopScanning { msgId :: Word32 }
+             | MsgScanningFinished { msgId :: Word32 }
+             | MsgRequestDeviceList { msgId :: Word32 }
+             | MsgDeviceList { msgId :: Word32
                              , msgDevices :: [ Device ]
                              }
-             | MsgDeviceAdded { msgId :: Word
+             | MsgDeviceAdded { msgId :: Word32
                               , msgDeviceName :: Text
-                              , msgDeviceIndex :: Word
+                              , msgDeviceIndex :: Word32
                               , msgDeviceMessages :: Map Dev.DeviceMessageType Dev.MessageAttributes
                               }
-             | MsgDeviceRemoved { msgId :: Word
-                                , msgDeviceIndex :: Word
+             | MsgDeviceRemoved { msgId :: Word32
+                                , msgDeviceIndex :: Word32
                                 }
                -- raw device messages
-             | MsgRawWriteCmd { msgId :: Word
-                              , msgDeviceIndex :: Word
+             | MsgRawWriteCmd { msgId :: Word32
+                              , msgDeviceIndex :: Word32
                               , msgEndpoint :: Text
                               , msgData :: RawData
                               , msgWriteWithResponse :: Bool }
-             | MsgRawReadCmd { msgId :: Word
-                             , msgDeviceIndex :: Word
+             | MsgRawReadCmd { msgId :: Word32
+                             , msgDeviceIndex :: Word32
                              , msgEndpoint :: Text
-                             , msgExpectedLength :: Word
+                             , msgExpectedLength :: Word32
                              , msgWaitForData :: Bool }
-             | MsgRawReading { msgId :: Word
-                             , msgDeviceIndex :: Word
+             | MsgRawReading { msgId :: Word32
+                             , msgDeviceIndex :: Word32
                              , msgEndpoint :: Text
                              , msgData :: RawData }
-             | MsgRawSubscribeCmd { msgId :: Word
-                                  , msgDeviceIndex :: Word
+             | MsgRawSubscribeCmd { msgId :: Word32
+                                  , msgDeviceIndex :: Word32
                                   , msgEndpoint :: Text }
-             | MsgRawUnsubscribeCmd { msgId :: Word
-                                    , msgDeviceIndex :: Word
+             | MsgRawUnsubscribeCmd { msgId :: Word32
+                                    , msgDeviceIndex :: Word32
                                     , msgEndpoint :: Text }
                -- generic device messages
-             | MsgStopDeviceCmd { msgId :: Word
-                                , msgDeviceIndex :: Word
+             | MsgStopDeviceCmd { msgId :: Word32
+                                , msgDeviceIndex :: Word32
                                 }
-             | MsgStopAllDevices { msgId :: Word }
-             | MsgVibrateCmd { msgId :: Word
-                             , msgDeviceIndex :: Word
+             | MsgStopAllDevices { msgId :: Word32 }
+             | MsgVibrateCmd { msgId :: Word32
+                             , msgDeviceIndex :: Word32
                              , msgSpeeds :: [ Vibrate ]
                              }
-             | MsgLinearCmd { msgId :: Word
-                            , msgDeviceIndex :: Word
+             | MsgLinearCmd { msgId :: Word32
+                            , msgDeviceIndex :: Word32
                             , msgVectors :: [ LinearActuate ]
                             }
-             | MsgRotateCmd { msgId :: Word
-                            , msgDeviceIndex :: Word
+             | MsgRotateCmd { msgId :: Word32
+                            , msgDeviceIndex :: Word32
                             , msgRotations :: [ Rotate ]
                             }
                -- generic sensor messages
-             | MsgBatteryLevelCmd { msgId :: Word
-                                  , msgDeviceIndex :: Word
+             | MsgBatteryLevelCmd { msgId :: Word32
+                                  , msgDeviceIndex :: Word32
                                   }
-             | MsgBatteryLevelReading { msgId :: Word
-                                      , msgDeviceIndex :: Word
+             | MsgBatteryLevelReading { msgId :: Word32
+                                      , msgDeviceIndex :: Word32
                                       , msgBatteryLevel :: Double
                                       }
-             | MsgRSSILevelCmd { msgId :: Word
-                               , msgDeviceIndex :: Word
+             | MsgRSSILevelCmd { msgId :: Word32
+                               , msgDeviceIndex :: Word32
                                }
-             | MsgRSSILevelReading { msgId :: Word
-                                   , msgDeviceIndex :: Word
+             | MsgRSSILevelReading { msgId :: Word32
+                                   , msgDeviceIndex :: Word32
                                    , msgRSSILevel :: Int
                                    }
   deriving (Show, Eq, Generic)
