@@ -8,13 +8,6 @@ import Data.Aeson.Casing
 stripPrefix :: String -> String -> String
 stripPrefix s = drop $ length s
 
-stripPrefixOptions s = defaultOptions { fieldLabelModifier = stripPrefix s }
-
-stripPrefixKeyOptions s = defaultJSONKeyOptions { keyModifier = stripPrefix s }
-
-pascalCaseOptions :: Options
-pascalCaseOptions = defaultOptions { fieldLabelModifier = pascalCase }
-
 pascalCaseKeyOptions :: JSONKeyOptions
 pascalCaseKeyOptions = defaultJSONKeyOptions { keyModifier = pascalCase }
 

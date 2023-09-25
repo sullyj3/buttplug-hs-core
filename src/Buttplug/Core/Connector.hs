@@ -23,17 +23,10 @@ module Buttplug.Core.Connector where
 
 import           Control.Exception
 import           System.IO.Error              ( isDoesNotExistError )
-import           Data.ByteString.Lazy         ( fromStrict, toStrict )
+import           Data.ByteString.Lazy         ( fromStrict )
 import           Data.ByteString              ( ByteString )
 import qualified Network.WebSockets           as WS
-import           Network.WebSockets.Stream    ( makeStream )
-import           Network.Connection           ( TLSSettings(..)
-                                              , ConnectionParams(..)
-                                              , initConnectionContext
-                                              , connectTo
-                                              , connectionGetChunk
-                                              , connectionPut )
-import           Network.Socket               ( withSocketsDo, PortNumber )
+import           Network.Socket               ( withSocketsDo )
 import           Data.Aeson                   ( encode
                                               , decode )
 

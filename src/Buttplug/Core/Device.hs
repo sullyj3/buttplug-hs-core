@@ -16,31 +16,24 @@ Types for representing sex toys, as well as ways of actuating them.
 
 module Buttplug.Core.Device where
 
-import           GHC.Generics
-import           Control.Monad       (foldM)
 import           Data.Map.Strict     (Map)
-import           Data.Maybe          (catMaybes)
 import           Data.Text           (Text)
-import           Data.Aeson.Types    ( Parser )
+import           Data.Aeson.Types    ( toJSONKeyText
+                                     , FromJSONKeyFunction(..)
+                                     )
 import           Data.Aeson          ( ToJSON(..)
                                      , FromJSON(..)
                                      , ToJSONKey(..)
                                      , FromJSONKey(..)
                                      , (.=)
                                      , (.:?)
+                                     , (.:)
                                      , Value(..)
                                      , object
-                                     , genericToJSON
-                                     , genericToJSONKey
-                                     , genericFromJSONKey
-                                     , genericParseJSON
                                      , withObject )
 import           Data.Word           ( Word32 )
-import qualified Data.HashMap.Strict as HMap
 
-import Buttplug.Core.Internal.JSONUtils
-
--- | For a particular actuation feature (Vibration, Rotation, or Linear), 
+-- | For a particular actuation feature (Vibration, Rotation, or Linear),
 -- represents how many of that feature the device has, and the available 
 -- resolution of control of that feature. See
 -- (<https://buttplug-spec.docs.buttplug.io/enumeration.html#message-attributes-for-devicelist-and-deviceadded>)
@@ -48,11 +41,14 @@ import Buttplug.Core.Internal.JSONUtils
 data MessageAttributes = MessageAttributes
        { attrFeatureCount :: Maybe Word32
        , attrStepCount :: Maybe [Word32] }
-  deriving (Generic, Show, Eq)
+  deriving (Show, Eq)
 
 
 instance ToJSON MessageAttributes where
-  toJSON = genericToJSON msgAttributeOptions
+  toJSON msgAttr = object
+    [ "FeatureCount" .= attrFeatureCount msgAttr,
+      "StepCount" .= attrStepCount msgAttr
+    ]
 
 instance FromJSON MessageAttributes where
   parseJSON = withObject "MessageAttributes" \v -> MessageAttributes
@@ -65,13 +61,22 @@ data Device =
               , deviceIndex :: Word32
               , deviceMessages :: Map DeviceMessageType MessageAttributes
               }
-  deriving (Generic, Show, Eq)
+  deriving (Show, Eq)
 
 instance ToJSON Device where
-  toJSON = genericToJSON pascalCaseOptions
+  toJSON device = object
+    [ "DeviceName" .= deviceName device,
+      "DeviceIndex" .= deviceIndex device,
+      "DeviceMessages" .= deviceMessages device
+    ]
 
 instance FromJSON Device where
-  parseJSON = genericParseJSON pascalCaseOptions
+  parseJSON = withObject "Device" $ \o ->
+    Device
+      <$> o .: "DeviceName"
+      <*> o .: "DeviceIndex"
+      <*> o .: "DeviceMessages"
+
 ---------------------------------------------------------------
 
 -- | Represents which message types the device supports
@@ -89,16 +94,50 @@ data DeviceMessageType =
   | DevVibrateCmd
   | DevLinearCmd
   | DevRotateCmd
-  deriving (Generic, Show, Eq, Ord)
+  deriving (Show, Eq, Ord)
 
 instance ToJSON DeviceMessageType where
-  toJSON = genericToJSON deviceMessageOptions
+  toJSON DevRawWriteCmd = String "RawWriteCmd"
+  toJSON DevRawReadCmd = String "RawReadCmd"
+  toJSON DevRawSubscribeCmd = String "RawSubscribeCmd"
+  toJSON DevRawUnsubscribeCmd = String "RawUnsubscribeCmd"
+  toJSON DevStopDeviceCmd = String "StopDeviceCmd"
+  toJSON DevVibrateCmd = String "VibrateCmd"
+  toJSON DevLinearCmd = String "LinearCmd"
+  toJSON DevRotateCmd = String "RotateCmd"
 
 instance FromJSON DeviceMessageType where
-  parseJSON = genericParseJSON deviceMessageOptions
+  parseJSON (String "RawWriteCmd") = pure DevRawWriteCmd
+  parseJSON (String "RawReadCmd") = pure DevRawReadCmd
+  parseJSON (String "RawSubscribeCmd") = pure DevRawSubscribeCmd
+  parseJSON (String "RawUnsubscribeCmd") = pure DevRawUnsubscribeCmd
+  parseJSON (String "StopDeviceCmd") = pure DevStopDeviceCmd
+  parseJSON (String "VibrateCmd") = pure DevVibrateCmd
+  parseJSON (String "LinearCmd") = pure DevLinearCmd
+  parseJSON (String "RotateCmd") = pure DevRotateCmd
+  parseJSON deviceMessageType = fail $ "Cannot decode: " <> (show deviceMessageType)
 
 instance ToJSONKey DeviceMessageType where
-  toJSONKey = genericToJSONKey (stripPrefixKeyOptions "Dev")
+  toJSONKey = toJSONKeyText $ \deviceMessageType ->
+    case deviceMessageType of
+      DevRawWriteCmd -> "RawWriteCmd"
+      DevRawReadCmd -> "RawReadCmd"
+      DevRawSubscribeCmd -> "RawSubscribeCmd"
+      DevRawUnsubscribeCmd -> "RawUnsubscribeCmd"
+      DevStopDeviceCmd -> "StopDeviceCmd"
+      DevVibrateCmd -> "VibrateCmd"
+      DevLinearCmd -> "LinearCmd"
+      DevRotateCmd -> "RotateCmd"
 
 instance FromJSONKey DeviceMessageType where
-  fromJSONKey = genericFromJSONKey (stripPrefixKeyOptions "Dev")
+  fromJSONKey = FromJSONKeyTextParser $ \deviceMessageType ->
+    case deviceMessageType of
+      "RawWriteCmd" -> pure DevRawWriteCmd
+      "RawReadCmd" -> pure DevRawReadCmd
+      "RawSubscribeCmd" -> pure DevRawSubscribeCmd
+      "RawUnsubscribeCmd" -> pure DevRawUnsubscribeCmd
+      "StopDeviceCmd" -> pure DevStopDeviceCmd
+      "VibrateCmd" -> pure DevVibrateCmd
+      "LinearCmd" -> pure DevLinearCmd
+      "RotateCmd" -> pure DevRotateCmd
+      deviceMessageTypeKey -> fail $ "Cannot decode key: " <> show deviceMessageTypeKey
