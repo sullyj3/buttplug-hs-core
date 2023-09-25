@@ -2,6 +2,8 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE NamedFieldPuns #-}
 
 import           Text.RawString.QQ
 import           GHC.Generics
@@ -28,42 +30,121 @@ import           Data.Text.Encoding       ( decodeUtf8 )
 import qualified Data.Text.IO             as T
 import           Data.Maybe (isJust)
 import           Data.ByteString          ( ByteString )
+import qualified Data.ByteString.Char8    as BS8
 import qualified Data.ByteString          as BS
 import           Data.ByteString.Lazy     ( toStrict )
-import           Data.Word                ( Word8 )
+import           Data.Word                ( Word8, Word32 )
+import           Data.Map.Strict          ( Map )
 
 import           Buttplug.Core.Message
 import           Buttplug.Core.Device
 import           Buttplug.Core.Internal.JSONUtils
 
+
 instance Arbitrary RawData where
-  arbitrary = genericArbitraryU
-  shrink = genericShrink
+  arbitrary = RawData <$> genByteString
+
 instance Arbitrary MessageAttributes where
-  arbitrary = genericArbitraryU
-  shrink = genericShrink
+  arbitrary = do
+    attrFeatureCount <- arbitrary @(Maybe Word32)
+    attrStepCount <- arbitrary @(Maybe [Word32])
+    pure MessageAttributes
+      { attrFeatureCount,
+        attrStepCount
+      }
+
 instance Arbitrary DeviceMessageType where
-  arbitrary = genericArbitraryU
-  shrink = genericShrink
+  arbitrary = elements
+    [ DevRawWriteCmd
+    , DevRawReadCmd
+    , DevRawSubscribeCmd
+    , DevRawUnsubscribeCmd
+    , DevStopDeviceCmd
+    , DevVibrateCmd
+    , DevLinearCmd
+    , DevRotateCmd
+    ]
+
 instance Arbitrary Device where
-  arbitrary = genericArbitraryU
-  shrink = genericShrink
+  arbitrary = do
+    deviceName <- arbitrary @T.Text
+    deviceIndex <- arbitrary @Word32
+    deviceMessages <- arbitrary @(Map DeviceMessageType MessageAttributes)
+    pure $ Device
+      { deviceName,
+        deviceIndex,
+        deviceMessages
+      }
+
 instance Arbitrary ErrorCode where
-  arbitrary = genericArbitraryU
-  shrink = genericShrink
+  arbitrary = elements
+    [ ERROR_UNKNOWN
+    , ERROR_INIT
+    , ERROR_PING
+    , ERROR_MSG
+    , ERROR_DEVICE
+    ]
+
 instance Arbitrary Vibrate where
-  arbitrary = genericArbitraryU
-  shrink = genericShrink
+  arbitrary = do
+    vibrateIndex <- arbitrary @Word32
+    vibrateSpeed <- arbitrary @Double
+    pure $ Vibrate
+      { vibrateIndex,
+        vibrateSpeed
+      }
+
 instance Arbitrary LinearActuate where
-  arbitrary = genericArbitraryU
-  shrink = genericShrink
+  arbitrary = do
+    linActIndex <- arbitrary @Word32
+    linActDuration <- arbitrary @Word32
+    linActPosition <- arbitrary @Double
+    pure $ LinearActuate
+      { linActIndex,
+        linActDuration,
+        linActPosition
+      }
+
 instance Arbitrary Rotate where
-  arbitrary = genericArbitraryU
-  shrink = genericShrink
+  arbitrary = do
+    rotateIndex <- arbitrary @Word32
+    rotateSpeed <- arbitrary @Double
+    rotateClockwise <- arbitrary @Bool
+    pure $ Rotate
+      { rotateIndex,
+        rotateSpeed,
+        rotateClockwise
+      }
 
 instance Arbitrary Message where
-  arbitrary = genericArbitraryU
-  shrink = genericShrink
+  arbitrary = oneof
+    [ MsgOk <$> arbitrary,
+      MsgError <$> arbitrary <*> arbitrary <*> arbitrary,
+      MsgPing <$> arbitrary,
+      MsgRequestServerInfo <$> arbitrary <*> arbitrary <*> arbitrary,
+      MsgServerInfo <$> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary,
+      MsgStartScanning <$> arbitrary,
+      MsgStopScanning <$> arbitrary,
+      MsgScanningFinished <$> arbitrary,
+      MsgRequestDeviceList <$> arbitrary,
+      MsgDeviceList <$> arbitrary <*> arbitrary,
+      MsgDeviceAdded <$> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary,
+      MsgDeviceRemoved <$> arbitrary <*> arbitrary,
+      MsgRawWriteCmd <$> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary,
+      MsgRawReadCmd <$> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary,
+      MsgRawReading <$> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary,
+      MsgRawSubscribeCmd <$> arbitrary <*> arbitrary <*> arbitrary,
+      MsgRawUnsubscribeCmd <$> arbitrary <*> arbitrary <*> arbitrary,
+      MsgStopDeviceCmd <$> arbitrary <*> arbitrary,
+      MsgStopAllDevices <$> arbitrary,
+      MsgVibrateCmd <$> arbitrary <*> arbitrary <*> arbitrary,
+      MsgLinearCmd <$> arbitrary <*> arbitrary <*> arbitrary,
+      MsgRotateCmd <$> arbitrary <*> arbitrary <*> arbitrary,
+      MsgBatteryLevelCmd <$> arbitrary <*> arbitrary,
+      MsgBatteryLevelReading <$> arbitrary <*> arbitrary <*> arbitrary,
+      MsgRSSILevelCmd <$> arbitrary <*> arbitrary,
+      MsgRSSILevelReading <$> arbitrary <*> arbitrary <*> arbitrary
+    ]
 
 main :: IO ()
 main = hspec do
@@ -496,3 +577,11 @@ testButtplug = do
         decodeEncodeInverse :: Message -> Expectation
         decodeEncodeInverse msg = 
           (decode . encode $ msg) `shouldBe` Just msg
+
+-- * Generators
+genByteString :: Gen ByteString
+genByteString = BS8.pack <$> listOf genChar
+
+genChar :: Gen Char
+genChar = choose ('\0', '\xFFFF')
+
